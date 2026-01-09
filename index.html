@@ -181,9 +181,9 @@
         // IMPORTANT:
         // These are local, same-origin URLs served by GitHub Pages from your repo.
         // That avoids cross-origin Worker failures that happen in sandboxes.
-        const coreURL = new URL("./ffmpeg/ffmpeg-core.js", import.meta.url).toString();
-        const wasmURL = new URL("./ffmpeg/ffmpeg-core.wasm", import.meta.url).toString();
-        const classWorkerURL = new URL("./ffmpeg/worker.js", import.meta.url).toString();
+        const coreURL = new URL("./ffmpeg-core.js", import.meta.url).toString();
+        const wasmURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm";
+        const classWorkerURL = new URL("./worker.js", import.meta.url).toString();
 
         log("Using local assets:");
         log("  coreURL        = " + coreURL);
