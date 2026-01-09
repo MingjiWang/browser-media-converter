@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browser Media Converter (GitHub Pages Friendly)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .log-window::-webkit-scrollbar { width: 8px; }
+    .log-window::-webkit-scrollbar-track { background: #0b1220; }
+    .log-window::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
+    .log-window::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
+  <div class="max-w-3xl mx-auto p-6">
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-slate-900 mb-2">Media Converter</h1>
+      <p class="text-slate-600">GitHub Pages friendly • runs locally in your browser • no backend</p>
+    </header>
+
+    <div class="bg-white rounded-xl shadow-lg p-6">
+
+      <!-- Loader / Status -->
+      <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p id="statusMsg" class="text-blue-800 font-mono text-sm mb-3">System Idle.</p>
+
+        <div class="flex gap-3 items-center">
+          <button id="initBtn"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition">
+            Load Engine
+          </button>
+
+          <button id="clearLogsBtn"
+            class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded shadow transition">
+            Clear Logs
+          </button>
+        </div>
+
+        <p class="mt-3 text-xs text-slate-600">
+          Tip: First load may take a bit (WASM compile). Subsequent loads are faster due to caching.
+        </p>
+      </div>
+
+      <!-- Logs (always visible) -->
+      <div class="mb-6">
+        <div class="text-xs text-slate-500 mb-1">Debug Logs</div>
+        <div id="logs"
+          class="log-window h-48 overflow-y-auto bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded"></div>
+      </div>
+
+      <!-- App UI (disabled until engine loaded) -->
+      <div id="appInterface" class="opacity-40 pointer-events-none transition-opacity duration-300">
+        <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 relative mb-6">
+          <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+          <p class="text-slate-500 pointer-events-none">Drop Video/Audio File Here</p>
+          <p id="fileName" class="text-blue-600 font-bold mt-2 hidden"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Format</label>
+            <select id="format" class="w-full border p-2 rounded bg-white">
+              <optgroup label="Audio">
+                <option value="mp3">MP3</option>
+                <option value="wav">WAV</option>
+                <option value="aac">AAC</option>
+                <option value="flac">FLAC</option>
+                <option value="aiff">AIFF</option>
+              </optgroup>
+              <optgroup label="Video">
+                <option value="mp4">MP4</option>
+                <option value="webm">WebM</option>
+                <option value="gif">GIF</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Quality</label>
+            <select id="quality" class="w-full border p-2 rounded bg-white">
+              <option value="">Standard</option>
+              <option value="high">High (320k / 60fps-ish)</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="convertBtn"
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled>
+          Convert File
+        </button>
+
+        <div id="outputArea" class="hidden mt-6 text-center bg-green-50 p-4 rounded border border-green-200">
+          <p class="text-green-800 font-bold mb-2">Success!</p>
+          <a id="dlLink" class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            Download Result
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ESM runtime (small). Core/wasm/worker are served locally from your repo (/ffmpeg/...).
+    import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
+    import { fetchFile } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
+
+    const els = {
+      initBtn: document.getElementById("initBtn"),
+      clearLogsBtn: document.getElementById("clearLogsBtn"),
+      status: document.getElementById("statusMsg"),
+      app: document.getElementById("appInterface"),
+      file: document.getElementById("fileInput"),
+      fileName: document.getElementById("fileName"),
+      format: document.getElementById("format"),
+      quality: document.getElementById("quality"),
+      convertBtn: document.getElementById("convertBtn"),
+      logs: document.getElementById("logs"),
+      dlLink: document.getElementById("dlLink"),
+      output: document.getElementById("outputArea"),
+    };
+
+    const ts = () => new Date().toLocaleTimeString();
+    function log(msg) {
+      const line = document.createElement("div");
+      line.textContent = `[${ts()}] ${msg}`;
+      els.logs.appendChild(line);
+      els.logs.scrollTop = els.logs.scrollHeight;
+      console.log(msg);
+    }
+    function status(msg) {
+      els.status.textContent = msg;
+      log(`STATUS → ${msg}`);
+    }
+
+    els.clearLogsBtn.addEventListener("click", () => {
+      els.logs.innerHTML = "";
+      log("Logs cleared.");
+    });
+
+    const mimeFor = (ext) => ({
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      aac: "audio/aac",
+      flac: "audio/flac",
+      aiff: "audio/aiff",
+      mp4: "video/mp4",
+      webm: "video/webm",
+      gif: "image/gif",
+    }[ext] || "application/octet-stream");
+
+    function withTimeout(promise, ms, label) {
+      let t;
+      const timeout = new Promise((_, rej) => {
+        t = setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms);
+      });
+      return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+    }
+
+    let ffmpeg = null;
+    let engineLoaded = false;
+
+    async function loadEngine() {
+      els.initBtn.disabled = true;
+      els.convertBtn.disabled = true;
+      els.output.classList.add("hidden");
+      engineLoaded = false;
+
+      try {
+        status("Starting engine bootstrap…");
+        log("Creating FFmpeg instance");
+        ffmpeg = new FFmpeg();
+
+        ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
+        ffmpeg.on("progress", ({ progress }) => {
+          status(`Processing: ${Math.round(progress * 100)}%`);
+        });
+
+        // IMPORTANT:
+        // These are local, same-origin URLs served by GitHub Pages from your repo.
+        // That avoids cross-origin Worker failures that happen in sandboxes.
+        const coreURL = new URL("./ffmpeg/ffmpeg-core.js", import.meta.url).toString();
+        const wasmURL = new URL("./ffmpeg/ffmpeg-core.wasm", import.meta.url).toString();
+        const classWorkerURL = new URL("./ffmpeg/worker.js", import.meta.url).toString();
+
+        log("Using local assets:");
+        log("  coreURL        = " + coreURL);
+        log("  wasmURL        = " + wasmURL);
+        log("  classWorkerURL = " + classWorkerURL);
+
+        status("Calling ffmpeg.load()…");
+        // Timeout gives you a clear error instead of “hanging forever”
+        await withTimeout(
+          ffmpeg.load({ coreURL, wasmURL, classWorkerURL }),
+          45000,
+          "ffmpeg.load()"
+        );
+
+        engineLoaded = true;
+        status("Engine Ready. Select a file.");
+        els.app.classList.remove("opacity-40", "pointer-events-none");
+
+        // enable convert only when a file is chosen
+        els.convertBtn.disabled = !els.file.files?.[0];
+        els.initBtn.textContent = "Engine Loaded";
+        els.initBtn.classList.add("opacity-60");
+        log("Ready.");
+      } catch (err) {
+        console.error(err);
+        status("ERROR: " + err.message);
+        els.initBtn.disabled = false;
+        els.initBtn.textContent = "Retry Load";
+        alert(
+          "Engine failed to load.\n\n" +
+          "Common causes on GitHub Pages:\n" +
+          "• Missing /ffmpeg files or wrong filenames\n" +
+          "• GitHub Pages not deployed yet / caching\n\n" +
+          "Check the logs for the exact URLs being used."
+        );
+      }
+    }
+
+    async function convert() {
+      const file = els.file.files[0];
+      if (!file || !engineLoaded) return;
+
+      els.convertBtn.disabled = true;
+      els.output.classList.add("hidden");
+      status("Preparing…");
+
+      const inputName = `input_${Date.now()}`;
+      const outExt = els.format.value;
+      const outputName = `output_${Date.now()}.${outExt}`;
+
+      try {
+        status("Writing input file…");
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+        // Build ffmpeg args
+        const args = ["-i", inputName];
+
+        // Audio outputs
+        if (["mp3","wav","aac","flac","aiff"].includes(outExt)) {
+          args.push("-vn");
+          if (els.quality.value === "high") args.push("-b:a", "320k");
+        }
+
+        // Video outputs
+        if (["mp4","webm"].includes(outExt)) {
+          if (els.quality.value === "high") args.push("-r", "60");
+        }
+
+        // GIF (basic)
+        if (outExt === "gif") {
+          if (els.quality.value === "high") args.push("-r", "30");
+        }
+
+        args.push(outputName);
+
+        log("Exec: " + args.join(" "));
+        status("Converting…");
+        await ffmpeg.exec(args);
+
+        status("Reading output…");
+        const data = await ffmpeg.readFile(outputName);
+
+        const blob = new Blob([data.buffer], { type: mimeFor(outExt) });
+        els.dlLink.href = URL.createObjectURL(blob);
+        els.dlLink.download = `converted.${outExt}`;
+
+        els.output.classList.remove("hidden");
+        status("Complete!");
+
+      } catch (err) {
+        console.error(err);
+        log("Convert error: " + err.message);
+        alert("Conversion failed. Check logs.");
+      } finally {
+        // best-effort cleanup
+        try { await ffmpeg.deleteFile(inputName); } catch {}
+        try { await ffmpeg.deleteFile(outputName); } catch {}
+        els.convertBtn.disabled = false;
+      }
+    }
+
+    els.initBtn.addEventListener("click", loadEngine);
+    els.convertBtn.addEventListener("click", convert);
+
+    els.file.addEventListener("change", (e) => {
+      if (e.target.files?.[0]) {
+        els.fileName.textContent = e.target.files[0].name;
+        els.fileName.classList.remove("hidden");
+        els.convertBtn.disabled = !engineLoaded;
+      }
+    });
+  </script>
+</body>
+</html>
