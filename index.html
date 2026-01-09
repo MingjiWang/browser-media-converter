@@ -194,7 +194,7 @@
         // Timeout gives you a clear error instead of “hanging forever”
         await withTimeout(
           ffmpeg.load({ coreURL, wasmURL, classWorkerURL }),
-          45000,
+          450000,
           "ffmpeg.load()"
         );
 
