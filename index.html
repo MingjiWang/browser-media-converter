@@ -17,7 +17,7 @@
   <div class="max-w-3xl mx-auto p-6">
     <header class="mb-8 text-center">
       <h1 class="text-3xl font-bold text-slate-900 mb-2">Media Converter</h1>
-      <p class="text-slate-600">Runs locally in your browser • GitHub Pages friendly • extra debug</p>
+      <p class="text-slate-600">Runs locally in your browser • GitHub Pages friendly • deep worker debug</p>
     </header>
 
     <div class="bg-white rounded-xl shadow-lg p-6">
@@ -38,14 +38,14 @@
         </div>
 
         <p class="mt-3 text-xs text-slate-600">
-          If load takes &gt;60s, it’s usually: wrong/missing worker imports (const.js/errors.js) or worker crash.
+          If ffmpeg.load() times out, the Worker logs below should show the exact crash (missing import, CSP, etc).
         </p>
       </div>
 
       <div class="mb-6">
         <div class="text-xs text-slate-500 mb-1">Debug Logs</div>
         <div id="logs"
-          class="log-window h-56 overflow-y-auto bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded"></div>
+          class="log-window h-64 overflow-y-auto bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded"></div>
       </div>
 
       <div id="appInterface" class="opacity-40 pointer-events-none transition-opacity duration-300">
@@ -103,8 +103,8 @@
     import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
     import { fetchFile } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
 
-    // Bump BUILD to defeat aggressive caching
-    const BUILD = "20260110_003";
+    // bump to defeat caching if needed
+    const BUILD = "20260110_004";
 
     const els = {
       initBtn: document.getElementById("initBtn"),
@@ -134,7 +134,7 @@
       log(`STATUS → ${msg}`);
     }
 
-    // Catch silent crashes
+    // Catch page-level crashes
     window.addEventListener("error", (e) => log(`❌ window.error: ${e.message} @ ${e.filename || ""}:${e.lineno || ""}`));
     window.addEventListener("unhandledrejection", (e) => log(`❌ unhandledrejection: ${e.reason?.message || e.reason}`));
 
@@ -143,6 +143,47 @@
       log("Logs cleared.");
       log("BUILD = " + BUILD);
     });
+
+    // === Deep debug: monkey-patch Worker so we see FFmpeg's internal worker errors ===
+    (function patchWorkerForDebug() {
+      const NativeWorker = window.Worker;
+      if (!NativeWorker || NativeWorker.__patched_for_ffmpeg_debug__) return;
+
+      function DebugWorker(specifier, options) {
+        const optStr = options ? JSON.stringify(options) : "(none)";
+        log(`🧵 Worker created → ${String(specifier)} opts=${optStr}`);
+        const w = new NativeWorker(specifier, options);
+
+        w.addEventListener("error", (e) => {
+          // e.message is often generic; filename/lineno helps a lot
+          log(`❌ Worker error event: ${e.message || "error"} @ ${e.filename || ""}:${e.lineno || ""}`);
+        });
+
+        w.addEventListener("messageerror", () => {
+          log("❌ Worker messageerror: could not deserialize message");
+        });
+
+        // Log first couple of messages (then stop to avoid spam)
+        let msgCount = 0;
+        w.addEventListener("message", (ev) => {
+          msgCount++;
+          if (msgCount <= 3) {
+            let preview;
+            try { preview = JSON.stringify(ev.data); } catch { preview = String(ev.data); }
+            log(`🧵 Worker message[${msgCount}] → ${preview.slice(0, 300)}`);
+          }
+        });
+
+        return w;
+      }
+
+      // preserve prototype so instanceof Worker still works
+      DebugWorker.prototype = NativeWorker.prototype;
+      DebugWorker.__patched_for_ffmpeg_debug__ = true;
+      window.Worker = DebugWorker;
+
+      log("✅ Patched window.Worker for debug");
+    })();
 
     const mimeFor = (ext) => ({
       mp3: "audio/mpeg",
@@ -168,22 +209,17 @@
       log(`${label} url = ${url}`);
 
       const resp = await fetch(url, { cache: "no-store" });
-
       log(`${label} HTTP ${resp.status} ${resp.statusText}`);
       log(`${label} content-type = ${resp.headers.get("content-type") || "(none)"}`);
       log(`${label} content-length = ${resp.headers.get("content-length") || "(none)"}`);
 
       const buf = await resp.arrayBuffer();
       const bytes = buf.byteLength;
-      const kb = bytes / 1024;
-      const mb = bytes / (1024 * 1024);
+      log(`${label} downloaded = ${bytes} bytes (${(bytes/1024).toFixed(1)} KB)`);
 
-      log(`${label} downloaded = ${bytes} bytes (${kb.toFixed(1)} KB / ${mb.toFixed(3)} MB)`);
-
-      // Peek tiny responses (helps catch HTML/404 pages)
       if (bytes < 4096) {
-        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 300))));
-        log(`${label} head(<=300 chars) = ${JSON.stringify(head.slice(0, 300))}`);
+        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 400))));
+        log(`${label} head(<=400 chars) = ${JSON.stringify(head)}`);
       }
 
       if (!resp.ok) {
@@ -195,58 +231,6 @@
         const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 300))));
         throw new Error(`${label} too small (${bytes} bytes). head=${head.replace(/\s+/g," ").slice(0,120)}`);
       }
-    }
-
-    async function testWorker(classWorkerURL) {
-      status("Testing worker startup…");
-      log("Creating Worker: " + classWorkerURL);
-
-      return await new Promise((resolve, reject) => {
-        let done = false;
-        const w = new Worker(classWorkerURL, { type: "module" });
-
-        const timer = setTimeout(() => {
-          if (done) return;
-          done = true;
-          try { w.terminate(); } catch {}
-          reject(new Error("Worker startup test timed out (no message from worker)"));
-        }, 5000);
-
-        w.onerror = (e) => {
-          if (done) return;
-          done = true;
-          clearTimeout(timer);
-          log(`❌ worker.onerror: ${e.message || "error"} @ ${e.filename || ""}:${e.lineno || ""}`);
-          try { w.terminate(); } catch {}
-          reject(new Error("Worker error event fired (see logs)"));
-        };
-
-        w.onmessageerror = () => {
-          if (done) return;
-          done = true;
-          clearTimeout(timer);
-          log("❌ worker.onmessageerror: message could not be deserialized");
-          try { w.terminate(); } catch {}
-          reject(new Error("Worker messageerror"));
-        };
-
-        w.onmessage = (ev) => {
-          if (done) return;
-          done = true;
-          clearTimeout(timer);
-          log("✅ worker.onmessage received: " + JSON.stringify(ev.data).slice(0, 200));
-          try { w.terminate(); } catch {}
-          resolve(true);
-        };
-
-        // We "poke" it; worker may ignore unknown messages, but error events will still fire if imports fail.
-        try {
-          w.postMessage({ ping: true, t: Date.now() });
-          log("Sent ping to worker");
-        } catch (err) {
-          log("❌ Failed to postMessage to worker: " + err.message);
-        }
-      });
     }
 
     let ffmpeg = null;
@@ -263,33 +247,33 @@
         status("Starting engine bootstrap…");
 
         ffmpeg = new FFmpeg();
+
+        // FFmpeg library logs (may remain quiet if worker dies early)
         ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
         ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
 
-        // ✅ Matched versions for core.js + wasm
+        // Core + WASM from CDN (matched versions)
         const coreURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js";
         const wasmURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm";
 
-        // ✅ Local worker + its local module imports (const.js/errors.js) must exist in your repo root
+        // Local ESM worker and its local imports MUST exist:
+        // worker.js imports ./const.js and ./errors.js
         const classWorkerURL = new URL(`./worker.js?v=${BUILD}`, import.meta.url).toString();
         const constURL = new URL(`./const.js?v=${BUILD}`, import.meta.url).toString();
         const errorsURL = new URL(`./errors.js?v=${BUILD}`, import.meta.url).toString();
 
-        // Preflight checks: these catch 404/HTML responses immediately
-        await assertFetchable(classWorkerURL, "worker.js (local)", 10_000);
+        // Preflight: use realistic minimums (worker can be small!)
+        await assertFetchable(classWorkerURL, "worker.js (local)", 1000); // 1KB
         await assertFetchable(constURL, "const.js (local)", 200);
         await assertFetchable(errorsURL, "errors.js (local)", 200);
 
         await assertFetchable(coreURL, "ffmpeg-core.js (CDN)", 50_000);
         await assertFetchable(wasmURL, "ffmpeg-core.wasm (CDN)", 5_000_000);
 
-        // Worker sanity test (imports failing will show as worker.onerror)
-        await testWorker(classWorkerURL);
-
-        status("Calling ffmpeg.load()…");
+        status("Calling ffmpeg.load()… (watch Worker logs)");
         await withTimeout(
           ffmpeg.load({ coreURL, wasmURL, classWorkerURL }),
-          60000,
+          90000,
           "ffmpeg.load()"
         );
 
@@ -305,7 +289,7 @@
         status("ERROR: " + err.message);
         els.initBtn.disabled = false;
         els.initBtn.textContent = "Retry Load";
-        alert("Engine failed to load. Check logs; it will usually show the exact missing/blocked file.");
+        alert("Engine failed to load. Check logs — Worker errors will reveal the exact cause.");
       }
     }
 
