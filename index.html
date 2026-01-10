@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Browser Media Converter (GitHub Pages Friendly)</title>
+  <title>Browser Media Converter (GitHub Pages)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .log-window::-webkit-scrollbar { width: 8px; }
@@ -17,12 +17,11 @@
   <div class="max-w-3xl mx-auto p-6">
     <header class="mb-8 text-center">
       <h1 class="text-3xl font-bold text-slate-900 mb-2">Media Converter</h1>
-      <p class="text-slate-600">GitHub Pages friendly • runs locally in your browser • no backend</p>
+      <p class="text-slate-600">Runs locally in your browser • GitHub Pages friendly</p>
     </header>
 
     <div class="bg-white rounded-xl shadow-lg p-6">
 
-      <!-- Loader / Status -->
       <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p id="statusMsg" class="text-blue-800 font-mono text-sm mb-3">System Idle.</p>
 
@@ -39,18 +38,16 @@
         </div>
 
         <p class="mt-3 text-xs text-slate-600">
-          Tip: First load may take a bit (WASM compile). Subsequent loads are faster due to caching.
+          If load takes &gt;30s, it’s usually a bad URL / mismatch / worker crash (logs will show).
         </p>
       </div>
 
-      <!-- Logs (always visible) -->
       <div class="mb-6">
         <div class="text-xs text-slate-500 mb-1">Debug Logs</div>
         <div id="logs"
           class="log-window h-48 overflow-y-auto bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded"></div>
       </div>
 
-      <!-- App UI (disabled until engine loaded) -->
       <div id="appInterface" class="opacity-40 pointer-events-none transition-opacity duration-300">
         <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 relative mb-6">
           <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -103,9 +100,10 @@
   </div>
 
   <script type="module">
-    // ESM runtime (small). Core/wasm/worker are served locally from your repo (/ffmpeg/...).
     import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
     import { fetchFile } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
+
+    const BUILD = "20260110_002"; // bump this if you want to defeat cache
 
     const els = {
       initBtn: document.getElementById("initBtn"),
@@ -135,9 +133,14 @@
       log(`STATUS → ${msg}`);
     }
 
+    // Catch silent worker crashes / promise rejections
+    window.addEventListener("error", (e) => log(`❌ window.error: ${e.message}`));
+    window.addEventListener("unhandledrejection", (e) => log(`❌ unhandledrejection: ${e.reason?.message || e.reason}`));
+
     els.clearLogsBtn.addEventListener("click", () => {
       els.logs.innerHTML = "";
       log("Logs cleared.");
+      log("BUILD = " + BUILD);
     });
 
     const mimeFor = (ext) => ({
@@ -151,10 +154,41 @@
       gif: "image/gif",
     }[ext] || "application/octet-stream");
 
+    async function headOrGetSize(url) {
+      // HEAD sometimes blocked; fall back to GET range-ish
+      try {
+        const r = await fetch(url, { method: "HEAD", cache: "no-store" });
+        const len = r.headers.get("content-length");
+        return len ? Number(len) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function assertFetchable(url, label, minBytes) {
+      status(`Checking ${label}…`);
+      log(`${label} url = ${url}`);
+
+      const size = await headOrGetSize(url);
+      if (size != null) log(`${label} content-length ≈ ${(size/1024/1024).toFixed(2)} MB`);
+
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) {
+        const t = await resp.text().catch(() => "");
+        throw new Error(`${label} fetch failed: HTTP ${resp.status}. Body starts: ${t.slice(0,120)}`);
+      }
+      const buf = await resp.arrayBuffer();
+      log(`${label} downloaded ${(buf.byteLength/1024/1024).toFixed(2)} MB`);
+      if (buf.byteLength < minBytes) {
+        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, 200)));
+        throw new Error(`${label} too small (${buf.byteLength} bytes). Starts: ${head.replace(/\s+/g," ").slice(0,120)}`);
+      }
+    }
+
     function withTimeout(promise, ms, label) {
       let t;
       const timeout = new Promise((_, rej) => {
-        t = setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms);
+        t = setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms (worker likely crashed/blocked)`)), ms);
       });
       return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
     }
@@ -169,40 +203,35 @@
       engineLoaded = false;
 
       try {
+        log("BUILD = " + BUILD);
         status("Starting engine bootstrap…");
-        log("Creating FFmpeg instance");
+
         ffmpeg = new FFmpeg();
-
         ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
-        ffmpeg.on("progress", ({ progress }) => {
-          status(`Processing: ${Math.round(progress * 100)}%`);
-        });
+        ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
 
-        // IMPORTANT:
-        // These are local, same-origin URLs served by GitHub Pages from your repo.
-        // That avoids cross-origin Worker failures that happen in sandboxes.
-        const coreURL = new URL("./ffmpeg-core.js", import.meta.url).toString();
+        // ✅ MATCHED VERSION: core.js + core.wasm both from @ffmpeg/core@0.12.10 UMD
+        const coreURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js";
         const wasmURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm";
-        const classWorkerURL = new URL("./worker.js", import.meta.url).toString();
 
-        log("Using local assets:");
-        log("  coreURL        = " + coreURL);
-        log("  wasmURL        = " + wasmURL);
-        log("  classWorkerURL = " + classWorkerURL);
+        // ✅ local worker (same origin) + cache buster
+        const classWorkerURL = new URL(`./worker.js?v=${BUILD}`, import.meta.url).toString();
+
+        // Preflight checks so it never “hangs with mystery”
+        await assertFetchable(classWorkerURL, "class worker (local worker.js)", 500);
+        await assertFetchable(coreURL, "ffmpeg-core.js (CDN)", 50_000);
+        await assertFetchable(wasmURL, "ffmpeg-core.wasm (CDN)", 5_000_000);
 
         status("Calling ffmpeg.load()…");
-        // Timeout gives you a clear error instead of “hanging forever”
         await withTimeout(
           ffmpeg.load({ coreURL, wasmURL, classWorkerURL }),
-          450000,
+          60000,          // 60s max; if it exceeds this, it’s not “slow”, it’s broken
           "ffmpeg.load()"
         );
 
         engineLoaded = true;
         status("Engine Ready. Select a file.");
         els.app.classList.remove("opacity-40", "pointer-events-none");
-
-        // enable convert only when a file is chosen
         els.convertBtn.disabled = !els.file.files?.[0];
         els.initBtn.textContent = "Engine Loaded";
         els.initBtn.classList.add("opacity-60");
@@ -212,13 +241,7 @@
         status("ERROR: " + err.message);
         els.initBtn.disabled = false;
         els.initBtn.textContent = "Retry Load";
-        alert(
-          "Engine failed to load.\n\n" +
-          "Common causes on GitHub Pages:\n" +
-          "• Missing /ffmpeg files or wrong filenames\n" +
-          "• GitHub Pages not deployed yet / caching\n\n" +
-          "Check the logs for the exact URLs being used."
-        );
+        alert("Engine failed to load. Check logs (very likely worker/core URL issue).");
       }
     }
 
@@ -238,23 +261,19 @@
         status("Writing input file…");
         await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-        // Build ffmpeg args
         const args = ["-i", inputName];
 
-        // Audio outputs
         if (["mp3","wav","aac","flac","aiff"].includes(outExt)) {
           args.push("-vn");
           if (els.quality.value === "high") args.push("-b:a", "320k");
         }
 
-        // Video outputs
-        if (["mp4","webm"].includes(outExt)) {
-          if (els.quality.value === "high") args.push("-r", "60");
+        if (["mp4","webm"].includes(outExt) && els.quality.value === "high") {
+          args.push("-r", "60");
         }
 
-        // GIF (basic)
-        if (outExt === "gif") {
-          if (els.quality.value === "high") args.push("-r", "30");
+        if (outExt === "gif" && els.quality.value === "high") {
+          args.push("-r", "30");
         }
 
         args.push(outputName);
@@ -272,13 +291,11 @@
 
         els.output.classList.remove("hidden");
         status("Complete!");
-
       } catch (err) {
         console.error(err);
         log("Convert error: " + err.message);
         alert("Conversion failed. Check logs.");
       } finally {
-        // best-effort cleanup
         try { await ffmpeg.deleteFile(inputName); } catch {}
         try { await ffmpeg.deleteFile(outputName); } catch {}
         els.convertBtn.disabled = false;
@@ -287,7 +304,6 @@
 
     els.initBtn.addEventListener("click", loadEngine);
     els.convertBtn.addEventListener("click", convert);
-
     els.file.addEventListener("change", (e) => {
       if (e.target.files?.[0]) {
         els.fileName.textContent = e.target.files[0].name;
