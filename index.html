@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Browser Media Converter (GitHub Pages Debug)</title>
+  <title>Browser Media Converter</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .log-window::-webkit-scrollbar { width: 8px; }
@@ -17,11 +17,12 @@
   <div class="max-w-3xl mx-auto p-6">
     <header class="mb-8 text-center">
       <h1 class="text-3xl font-bold text-slate-900 mb-2">Media Converter</h1>
-      <p class="text-slate-600">Runs locally in your browser • GitHub Pages friendly • deep worker debug</p>
+      <p class="text-slate-600">Runs locally in your browser • GitHub Pages friendly</p>
     </header>
 
     <div class="bg-white rounded-xl shadow-lg p-6">
 
+      <!-- Loader / Status -->
       <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p id="statusMsg" class="text-blue-800 font-mono text-sm mb-3">System Idle.</p>
 
@@ -38,16 +39,18 @@
         </div>
 
         <p class="mt-3 text-xs text-slate-600">
-          If ffmpeg.load() times out, the Worker logs below should show the exact crash (missing import, CSP, etc).
+          Tip: first load compiles WASM. Later loads are faster due to caching.
         </p>
       </div>
 
+      <!-- Logs -->
       <div class="mb-6">
         <div class="text-xs text-slate-500 mb-1">Debug Logs</div>
         <div id="logs"
           class="log-window h-64 overflow-y-auto bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded"></div>
       </div>
 
+      <!-- App UI -->
       <div id="appInterface" class="opacity-40 pointer-events-none transition-opacity duration-300">
         <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 relative mb-6">
           <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -55,7 +58,8 @@
           <p id="fileName" class="text-blue-600 font-bold mt-2 hidden"></p>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
+        <!-- Format / simple quality -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Format</label>
             <select id="format" class="w-full border p-2 rounded bg-white">
@@ -75,13 +79,106 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Quality</label>
-            <select id="quality" class="w-full border p-2 rounded bg-white">
-              <option value="">Standard</option>
-              <option value="high">High (320k / 60fps-ish)</option>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Quality preset</label>
+            <select id="qualityPreset" class="w-full border p-2 rounded bg-white">
+              <option value="standard">Standard (sane defaults)</option>
+              <option value="high">High (heavier + larger)</option>
+              <option value="custom">Custom (advanced controls)</option>
             </select>
           </div>
         </div>
+
+        <!-- Output naming -->
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Output file name</label>
+
+          <div class="grid grid-cols-3 gap-3 items-center">
+            <select id="nameMode" class="col-span-1 border p-2 rounded bg-white">
+              <option value="auto" selected>Auto</option>
+              <option value="custom">Custom</option>
+            </select>
+
+            <input id="customBaseName" class="col-span-2 border p-2 rounded bg-white"
+              placeholder="e.g. my_export (no extension)" disabled />
+          </div>
+
+          <p class="mt-2 text-xs text-slate-500">
+            Auto = original filename + suffix like <span class="font-mono">_to_mp3</span>. Extension is added automatically.
+          </p>
+        </div>
+
+        <!-- Advanced controls -->
+        <details id="advancedPanel" class="mb-4">
+          <summary class="cursor-pointer text-sm text-slate-600 select-none">
+            Advanced controls (bitrate / sample rate / fps / codec / scale)
+          </summary>
+
+          <div class="mt-3 grid grid-cols-2 gap-4">
+            <!-- Audio -->
+            <div class="bg-slate-50 border rounded-lg p-4">
+              <div class="text-xs font-bold text-slate-600 mb-2">Audio</div>
+
+              <label class="block text-xs text-slate-500 mb-1">Bitrate (kbps, e.g. 192 / 320)</label>
+              <input id="audioBitrateK" type="number" min="8" step="1"
+                     class="w-full border p-2 rounded bg-white" placeholder="(leave blank)" />
+
+              <label class="block text-xs text-slate-500 mt-3 mb-1">Sample rate (Hz, e.g. 44100 / 48000)</label>
+              <input id="audioSampleRate" type="number" min="8000" step="100"
+                     class="w-full border p-2 rounded bg-white" placeholder="(leave blank)" />
+
+              <label class="block text-xs text-slate-500 mt-3 mb-1">Channels</label>
+              <select id="audioChannels" class="w-full border p-2 rounded bg-white">
+                <option value="">(leave as-is)</option>
+                <option value="1">Mono (1)</option>
+                <option value="2">Stereo (2)</option>
+              </select>
+            </div>
+
+            <!-- Video -->
+            <div class="bg-slate-50 border rounded-lg p-4">
+              <div class="text-xs font-bold text-slate-600 mb-2">Video</div>
+
+              <label class="block text-xs text-slate-500 mb-1">FPS (e.g. 24 / 30 / 60)</label>
+              <input id="videoFps" type="number" min="1" step="1"
+                     class="w-full border p-2 rounded bg-white" placeholder="(leave blank)" />
+
+              <label class="block text-xs text-slate-500 mt-3 mb-1">Scale (width:-1, e.g. 1280:-1)</label>
+              <input id="videoScale" type="text"
+                     class="w-full border p-2 rounded bg-white" placeholder="(leave blank)" />
+
+              <label class="block text-xs text-slate-500 mt-3 mb-1">Codec</label>
+              <select id="videoCodec" class="w-full border p-2 rounded bg-white">
+                <option value="">(auto)</option>
+                <option value="libx264">H.264 (libx264) for MP4</option>
+                <option value="libvpx-vp9">VP9 (libvpx-vp9) for WebM</option>
+              </select>
+
+              <label class="block text-xs text-slate-500 mt-3 mb-1">CRF (quality/size, lower=better)</label>
+              <input id="videoCrf" type="number" min="0" max="51" step="1"
+                     class="w-full border p-2 rounded bg-white" placeholder="e.g. 23 (leave blank)" />
+            </div>
+
+            <!-- GIF -->
+            <div class="bg-slate-50 border rounded-lg p-4 col-span-2">
+              <div class="text-xs font-bold text-slate-600 mb-2">GIF (optional)</div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">GIF FPS (e.g. 12 / 15 / 24)</label>
+                  <input id="gifFps" type="number" min="1" step="1"
+                        class="w-full border p-2 rounded bg-white" placeholder="(leave blank)" />
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">GIF scale (width:-1)</label>
+                  <input id="gifScale" type="text"
+                        class="w-full border p-2 rounded bg-white" placeholder="e.g. 640:-1 (leave blank)" />
+                </div>
+              </div>
+              <p class="mt-2 text-xs text-slate-500">
+                Note: high-quality GIFs often need palette filters; this tool uses a simple approach for speed.
+              </p>
+            </div>
+          </div>
+        </details>
 
         <button id="convertBtn"
           class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
@@ -103,8 +200,7 @@
     import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
     import { fetchFile } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
 
-    // bump to defeat caching if needed
-    const BUILD = "20260110_004";
+    const BUILD = "20260110_005"; // bump if you want cache-busting
 
     const els = {
       initBtn: document.getElementById("initBtn"),
@@ -114,11 +210,29 @@
       file: document.getElementById("fileInput"),
       fileName: document.getElementById("fileName"),
       format: document.getElementById("format"),
-      quality: document.getElementById("quality"),
+      qualityPreset: document.getElementById("qualityPreset"),
+      advancedPanel: document.getElementById("advancedPanel"),
+      nameMode: document.getElementById("nameMode"),
+      customBaseName: document.getElementById("customBaseName"),
       convertBtn: document.getElementById("convertBtn"),
       logs: document.getElementById("logs"),
       dlLink: document.getElementById("dlLink"),
       output: document.getElementById("outputArea"),
+
+      // advanced audio
+      audioBitrateK: document.getElementById("audioBitrateK"),
+      audioSampleRate: document.getElementById("audioSampleRate"),
+      audioChannels: document.getElementById("audioChannels"),
+
+      // advanced video
+      videoFps: document.getElementById("videoFps"),
+      videoScale: document.getElementById("videoScale"),
+      videoCodec: document.getElementById("videoCodec"),
+      videoCrf: document.getElementById("videoCrf"),
+
+      // gif
+      gifFps: document.getElementById("gifFps"),
+      gifScale: document.getElementById("gifScale"),
     };
 
     const ts = () => new Date().toLocaleTimeString();
@@ -134,7 +248,6 @@
       log(`STATUS → ${msg}`);
     }
 
-    // Catch page-level crashes
     window.addEventListener("error", (e) => log(`❌ window.error: ${e.message} @ ${e.filename || ""}:${e.lineno || ""}`));
     window.addEventListener("unhandledrejection", (e) => log(`❌ unhandledrejection: ${e.reason?.message || e.reason}`));
 
@@ -144,7 +257,7 @@
       log("BUILD = " + BUILD);
     });
 
-    // === Deep debug: monkey-patch Worker so we see FFmpeg's internal worker errors ===
+    // Keep deep worker debug (you can remove later if you want)
     (function patchWorkerForDebug() {
       const NativeWorker = window.Worker;
       if (!NativeWorker || NativeWorker.__patched_for_ffmpeg_debug__) return;
@@ -154,34 +267,25 @@
         log(`🧵 Worker created → ${String(specifier)} opts=${optStr}`);
         const w = new NativeWorker(specifier, options);
 
-        w.addEventListener("error", (e) => {
-          // e.message is often generic; filename/lineno helps a lot
-          log(`❌ Worker error event: ${e.message || "error"} @ ${e.filename || ""}:${e.lineno || ""}`);
-        });
+        w.addEventListener("error", (e) => log(`❌ Worker error: ${e.message || "error"} @ ${e.filename || ""}:${e.lineno || ""}`));
+        w.addEventListener("messageerror", () => log("❌ Worker messageerror: could not deserialize message"));
 
-        w.addEventListener("messageerror", () => {
-          log("❌ Worker messageerror: could not deserialize message");
-        });
-
-        // Log first couple of messages (then stop to avoid spam)
         let msgCount = 0;
         w.addEventListener("message", (ev) => {
           msgCount++;
-          if (msgCount <= 3) {
+          if (msgCount <= 5) {
             let preview;
             try { preview = JSON.stringify(ev.data); } catch { preview = String(ev.data); }
-            log(`🧵 Worker message[${msgCount}] → ${preview.slice(0, 300)}`);
+            log(`🧵 Worker message[${msgCount}] → ${preview.slice(0, 400)}`);
           }
         });
 
         return w;
       }
 
-      // preserve prototype so instanceof Worker still works
       DebugWorker.prototype = NativeWorker.prototype;
       DebugWorker.__patched_for_ffmpeg_debug__ = true;
       window.Worker = DebugWorker;
-
       log("✅ Patched window.Worker for debug");
     })();
 
@@ -210,29 +314,134 @@
 
       const resp = await fetch(url, { cache: "no-store" });
       log(`${label} HTTP ${resp.status} ${resp.statusText}`);
-      log(`${label} content-type = ${resp.headers.get("content-type") || "(none)"}`);
-      log(`${label} content-length = ${resp.headers.get("content-length") || "(none)"}`);
+      const ct = resp.headers.get("content-type") || "(none)";
+      const cl = resp.headers.get("content-length") || "(none)";
+      log(`${label} content-type = ${ct}`);
+      log(`${label} content-length = ${cl}`);
 
       const buf = await resp.arrayBuffer();
       const bytes = buf.byteLength;
       log(`${label} downloaded = ${bytes} bytes (${(bytes/1024).toFixed(1)} KB)`);
 
-      if (bytes < 4096) {
-        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 400))));
-        log(`${label} head(<=400 chars) = ${JSON.stringify(head)}`);
-      }
-
       if (!resp.ok) {
         const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 300))));
         throw new Error(`${label} fetch failed: HTTP ${resp.status}. head=${head.slice(0,120)}`);
       }
-
       if (bytes < minBytes) {
         const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 300))));
         throw new Error(`${label} too small (${bytes} bytes). head=${head.replace(/\s+/g," ").slice(0,120)}`);
       }
     }
 
+    // --- UI logic: naming ---
+    function safeBaseName(s) {
+      // remove extension + keep filename-safe chars
+      const noExt = s.replace(/\.[^.]+$/, "");
+      return noExt.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") || "converted";
+    }
+    function buildDownloadName(originalName, outExt) {
+      if (els.nameMode.value === "custom") {
+        const base = (els.customBaseName.value || "").trim();
+        const cleaned = base.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_");
+        return `${cleaned || "converted"}.${outExt}`;
+      }
+      const base = safeBaseName(originalName || "input");
+      return `${base}_to_${outExt}.${outExt}`;
+    }
+
+    function syncNameUI() {
+      const isCustom = els.nameMode.value === "custom";
+      els.customBaseName.disabled = !isCustom;
+      els.customBaseName.classList.toggle("opacity-60", !isCustom);
+    }
+    els.nameMode.addEventListener("change", syncNameUI);
+    syncNameUI();
+
+    // --- UI logic: advanced visibility ---
+    function syncAdvancedUI() {
+      const isCustom = els.qualityPreset.value === "custom";
+      // if user chooses custom, open advanced panel
+      if (isCustom) els.advancedPanel.open = true;
+    }
+    els.qualityPreset.addEventListener("change", syncAdvancedUI);
+
+    // --- Arg builder ---
+    function addIf(args, cond, ...parts) {
+      if (cond) args.push(...parts);
+    }
+
+    function collectArgsForConversion(outExt) {
+      const preset = els.qualityPreset.value;
+      const args = [];
+
+      // generic: video transforms
+      const videoFps = Number(els.videoFps.value);
+      const videoScale = (els.videoScale.value || "").trim();
+      const videoCodec = (els.videoCodec.value || "").trim();
+      const videoCrf = els.videoCrf.value === "" ? null : Number(els.videoCrf.value);
+
+      // audio transforms
+      const audioBitrateK = els.audioBitrateK.value === "" ? null : Number(els.audioBitrateK.value);
+      const audioSampleRate = els.audioSampleRate.value === "" ? null : Number(els.audioSampleRate.value);
+      const audioChannels = (els.audioChannels.value || "").trim();
+
+      // gif transforms
+      const gifFps = els.gifFps.value === "" ? null : Number(els.gifFps.value);
+      const gifScale = (els.gifScale.value || "").trim();
+
+      const isAudio = ["mp3","wav","aac","flac","aiff"].includes(outExt);
+      const isVideo = ["mp4","webm"].includes(outExt);
+      const isGif = outExt === "gif";
+
+      if (isAudio) {
+        args.push("-vn"); // no video
+
+        if (preset === "high") {
+          // safe defaults if user doesn't set custom values
+          addIf(args, true, "-b:a", "320k");
+          addIf(args, true, "-ar", "48000");
+        } else if (preset === "standard") {
+          // leave mostly to ffmpeg defaults (still okay)
+        } else if (preset === "custom") {
+          addIf(args, audioBitrateK != null && Number.isFinite(audioBitrateK), "-b:a", `${audioBitrateK}k`);
+          addIf(args, audioSampleRate != null && Number.isFinite(audioSampleRate), "-ar", `${audioSampleRate}`);
+          addIf(args, audioChannels === "1" || audioChannels === "2", "-ac", audioChannels);
+        }
+      }
+
+      if (isVideo) {
+        // presets
+        if (preset === "high") {
+          addIf(args, true, "-r", "60");
+          // reasonable defaults:
+          // mp4 -> h264, webm -> vp9 (but we won't force unless user selects)
+        } else if (preset === "standard") {
+          // nothing
+        } else if (preset === "custom") {
+          addIf(args, Number.isFinite(videoFps) && videoFps > 0, "-r", `${videoFps}`);
+          addIf(args, videoScale.length > 0, "-vf", `scale=${videoScale}`);
+          addIf(args, videoCodec.length > 0, "-c:v", videoCodec);
+          addIf(args, videoCrf != null && Number.isFinite(videoCrf), "-crf", `${videoCrf}`);
+        }
+      }
+
+      if (isGif) {
+        // Fast/simple gif. (Palette method is higher quality but slower; can add later.)
+        if (preset === "high") {
+          addIf(args, true, "-r", "24");
+        } else if (preset === "custom") {
+          addIf(args, gifFps != null && Number.isFinite(gifFps), "-r", `${gifFps}`);
+        }
+
+        if (preset === "custom" && gifScale.length > 0) {
+          addIf(args, true, "-vf", `scale=${gifScale}`);
+        }
+      }
+
+      return args;
+    }
+
+    // --- Engine / conversion ---
     let ffmpeg = null;
     let engineLoaded = false;
 
@@ -247,31 +456,27 @@
         status("Starting engine bootstrap…");
 
         ffmpeg = new FFmpeg();
-
-        // FFmpeg library logs (may remain quiet if worker dies early)
         ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
         ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
 
-        // Core + WASM from CDN (matched versions)
+        // ✅ ESM core (works with module worker)
         const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
         const coreURL = `${base}/ffmpeg-core.js`;
         const wasmURL = `${base}/ffmpeg-core.wasm`;
 
-        // Local ESM worker and its local imports MUST exist:
-        // worker.js imports ./const.js and ./errors.js
+        // local worker + its local imports exist in repo root
         const classWorkerURL = new URL(`./worker.js?v=${BUILD}`, import.meta.url).toString();
         const constURL = new URL(`./const.js?v=${BUILD}`, import.meta.url).toString();
         const errorsURL = new URL(`./errors.js?v=${BUILD}`, import.meta.url).toString();
 
-        // Preflight: use realistic minimums (worker can be small!)
-        await assertFetchable(classWorkerURL, "worker.js (local)", 1000); // 1KB
+        // Preflight checks (keep, since they’re genuinely useful)
+        await assertFetchable(classWorkerURL, "worker.js (local)", 1000);
         await assertFetchable(constURL, "const.js (local)", 200);
         await assertFetchable(errorsURL, "errors.js (local)", 200);
-
         await assertFetchable(coreURL, "ffmpeg-core.js (CDN)", 50_000);
         await assertFetchable(wasmURL, "ffmpeg-core.wasm (CDN)", 5_000_000);
 
-        status("Calling ffmpeg.load()… (watch Worker logs)");
+        status("Calling ffmpeg.load()…");
         await withTimeout(
           ffmpeg.load({ coreURL, wasmURL, classWorkerURL }),
           90000,
@@ -281,16 +486,17 @@
         engineLoaded = true;
         status("Engine Ready. Select a file.");
         els.app.classList.remove("opacity-40", "pointer-events-none");
+
         els.convertBtn.disabled = !els.file.files?.[0];
         els.initBtn.textContent = "Engine Loaded";
         els.initBtn.classList.add("opacity-60");
         log("Ready.");
       } catch (err) {
         console.error(err);
-        status("ERROR: " + err.message);
+        status("ERROR: " + (err?.message || String(err)));
         els.initBtn.disabled = false;
         els.initBtn.textContent = "Retry Load";
-        alert("Engine failed to load. Check logs — Worker errors will reveal the exact cause.");
+        alert("Engine failed to load. Check logs.");
       }
     }
 
@@ -310,22 +516,8 @@
         status("Writing input file…");
         await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-        const args = ["-i", inputName];
-
-        if (["mp3","wav","aac","flac","aiff"].includes(outExt)) {
-          args.push("-vn");
-          if (els.quality.value === "high") args.push("-b:a", "320k");
-        }
-
-        if (["mp4","webm"].includes(outExt) && els.quality.value === "high") {
-          args.push("-r", "60");
-        }
-
-        if (outExt === "gif" && els.quality.value === "high") {
-          args.push("-r", "30");
-        }
-
-        args.push(outputName);
+        // Build args
+        const args = ["-i", inputName, ...collectArgsForConversion(outExt), outputName];
 
         log("Exec: " + args.join(" "));
         status("Converting…");
@@ -336,13 +528,16 @@
 
         const blob = new Blob([data.buffer], { type: mimeFor(outExt) });
         els.dlLink.href = URL.createObjectURL(blob);
-        els.dlLink.download = `converted.${outExt}`;
+
+        const dlName = buildDownloadName(file.name, outExt);
+        els.dlLink.download = dlName;
+        log("Download name: " + dlName);
 
         els.output.classList.remove("hidden");
         status("Complete!");
       } catch (err) {
         console.error(err);
-        log("Convert error: " + err.message);
+        log("Convert error: " + (err?.message || String(err)));
         alert("Conversion failed. Check logs.");
       } finally {
         try { await ffmpeg.deleteFile(inputName); } catch {}
@@ -351,6 +546,7 @@
       }
     }
 
+    // --- Listeners ---
     els.initBtn.addEventListener("click", loadEngine);
     els.convertBtn.addEventListener("click", convert);
 
