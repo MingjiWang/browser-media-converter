@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Browser Media Converter (GitHub Pages) v1.1</title>
+  <title>Browser Media Converter (GitHub Pages Debug)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .log-window::-webkit-scrollbar { width: 8px; }
@@ -17,7 +17,7 @@
   <div class="max-w-3xl mx-auto p-6">
     <header class="mb-8 text-center">
       <h1 class="text-3xl font-bold text-slate-900 mb-2">Media Converter</h1>
-      <p class="text-slate-600">Runs locally in your browser • GitHub Pages friendly</p>
+      <p class="text-slate-600">Runs locally in your browser • GitHub Pages friendly • extra debug</p>
     </header>
 
     <div class="bg-white rounded-xl shadow-lg p-6">
@@ -38,14 +38,14 @@
         </div>
 
         <p class="mt-3 text-xs text-slate-600">
-          If load takes &gt;30s, it’s usually a bad URL / mismatch / worker crash (logs will show).
+          If load takes &gt;60s, it’s usually: wrong/missing worker imports (const.js/errors.js) or worker crash.
         </p>
       </div>
 
       <div class="mb-6">
         <div class="text-xs text-slate-500 mb-1">Debug Logs</div>
         <div id="logs"
-          class="log-window h-48 overflow-y-auto bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded"></div>
+          class="log-window h-56 overflow-y-auto bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded"></div>
       </div>
 
       <div id="appInterface" class="opacity-40 pointer-events-none transition-opacity duration-300">
@@ -103,7 +103,8 @@
     import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
     import { fetchFile } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
 
-    const BUILD = "20260110_002"; // bump this if you want to defeat cache
+    // Bump BUILD to defeat aggressive caching
+    const BUILD = "20260110_003";
 
     const els = {
       initBtn: document.getElementById("initBtn"),
@@ -133,8 +134,8 @@
       log(`STATUS → ${msg}`);
     }
 
-    // Catch silent worker crashes / promise rejections
-    window.addEventListener("error", (e) => log(`❌ window.error: ${e.message}`));
+    // Catch silent crashes
+    window.addEventListener("error", (e) => log(`❌ window.error: ${e.message} @ ${e.filename || ""}:${e.lineno || ""}`));
     window.addEventListener("unhandledrejection", (e) => log(`❌ unhandledrejection: ${e.reason?.message || e.reason}`));
 
     els.clearLogsBtn.addEventListener("click", () => {
@@ -154,43 +155,98 @@
       gif: "image/gif",
     }[ext] || "application/octet-stream");
 
-    async function headOrGetSize(url) {
-      // HEAD sometimes blocked; fall back to GET range-ish
-      try {
-        const r = await fetch(url, { method: "HEAD", cache: "no-store" });
-        const len = r.headers.get("content-length");
-        return len ? Number(len) : null;
-      } catch {
-        return null;
-      }
+    function withTimeout(promise, ms, label) {
+      let t;
+      const timeout = new Promise((_, rej) => {
+        t = setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms);
+      });
+      return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
     }
 
     async function assertFetchable(url, label, minBytes) {
       status(`Checking ${label}…`);
       log(`${label} url = ${url}`);
 
-      const size = await headOrGetSize(url);
-      if (size != null) log(`${label} content-length ≈ ${(size/1024/1024).toFixed(2)} MB`);
-
       const resp = await fetch(url, { cache: "no-store" });
-      if (!resp.ok) {
-        const t = await resp.text().catch(() => "");
-        throw new Error(`${label} fetch failed: HTTP ${resp.status}. Body starts: ${t.slice(0,120)}`);
-      }
+
+      log(`${label} HTTP ${resp.status} ${resp.statusText}`);
+      log(`${label} content-type = ${resp.headers.get("content-type") || "(none)"}`);
+      log(`${label} content-length = ${resp.headers.get("content-length") || "(none)"}`);
+
       const buf = await resp.arrayBuffer();
-      log(`${label} downloaded ${(buf.byteLength/1024/1024).toFixed(2)} MB`);
-      if (buf.byteLength < minBytes) {
-        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, 200)));
-        throw new Error(`${label} too small (${buf.byteLength} bytes). Starts: ${head.replace(/\s+/g," ").slice(0,120)}`);
+      const bytes = buf.byteLength;
+      const kb = bytes / 1024;
+      const mb = bytes / (1024 * 1024);
+
+      log(`${label} downloaded = ${bytes} bytes (${kb.toFixed(1)} KB / ${mb.toFixed(3)} MB)`);
+
+      // Peek tiny responses (helps catch HTML/404 pages)
+      if (bytes < 4096) {
+        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 300))));
+        log(`${label} head(<=300 chars) = ${JSON.stringify(head.slice(0, 300))}`);
+      }
+
+      if (!resp.ok) {
+        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 300))));
+        throw new Error(`${label} fetch failed: HTTP ${resp.status}. head=${head.slice(0,120)}`);
+      }
+
+      if (bytes < minBytes) {
+        const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, Math.min(bytes, 300))));
+        throw new Error(`${label} too small (${bytes} bytes). head=${head.replace(/\s+/g," ").slice(0,120)}`);
       }
     }
 
-    function withTimeout(promise, ms, label) {
-      let t;
-      const timeout = new Promise((_, rej) => {
-        t = setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms (worker likely crashed/blocked)`)), ms);
+    async function testWorker(classWorkerURL) {
+      status("Testing worker startup…");
+      log("Creating Worker: " + classWorkerURL);
+
+      return await new Promise((resolve, reject) => {
+        let done = false;
+        const w = new Worker(classWorkerURL, { type: "module" });
+
+        const timer = setTimeout(() => {
+          if (done) return;
+          done = true;
+          try { w.terminate(); } catch {}
+          reject(new Error("Worker startup test timed out (no message from worker)"));
+        }, 5000);
+
+        w.onerror = (e) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          log(`❌ worker.onerror: ${e.message || "error"} @ ${e.filename || ""}:${e.lineno || ""}`);
+          try { w.terminate(); } catch {}
+          reject(new Error("Worker error event fired (see logs)"));
+        };
+
+        w.onmessageerror = () => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          log("❌ worker.onmessageerror: message could not be deserialized");
+          try { w.terminate(); } catch {}
+          reject(new Error("Worker messageerror"));
+        };
+
+        w.onmessage = (ev) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          log("✅ worker.onmessage received: " + JSON.stringify(ev.data).slice(0, 200));
+          try { w.terminate(); } catch {}
+          resolve(true);
+        };
+
+        // We "poke" it; worker may ignore unknown messages, but error events will still fire if imports fail.
+        try {
+          w.postMessage({ ping: true, t: Date.now() });
+          log("Sent ping to worker");
+        } catch (err) {
+          log("❌ Failed to postMessage to worker: " + err.message);
+        }
       });
-      return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
     }
 
     let ffmpeg = null;
@@ -210,22 +266,30 @@
         ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
         ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
 
-        // ✅ MATCHED VERSION: core.js + core.wasm both from @ffmpeg/core@0.12.10 UMD
+        // ✅ Matched versions for core.js + wasm
         const coreURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js";
         const wasmURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm";
 
-        // ✅ local worker (same origin) + cache buster
+        // ✅ Local worker + its local module imports (const.js/errors.js) must exist in your repo root
         const classWorkerURL = new URL(`./worker.js?v=${BUILD}`, import.meta.url).toString();
+        const constURL = new URL(`./const.js?v=${BUILD}`, import.meta.url).toString();
+        const errorsURL = new URL(`./errors.js?v=${BUILD}`, import.meta.url).toString();
 
-        // Preflight checks so it never “hangs with mystery”
-        await assertFetchable(classWorkerURL, "class worker (local worker.js)", 500);
+        // Preflight checks: these catch 404/HTML responses immediately
+        await assertFetchable(classWorkerURL, "worker.js (local)", 10_000);
+        await assertFetchable(constURL, "const.js (local)", 200);
+        await assertFetchable(errorsURL, "errors.js (local)", 200);
+
         await assertFetchable(coreURL, "ffmpeg-core.js (CDN)", 50_000);
         await assertFetchable(wasmURL, "ffmpeg-core.wasm (CDN)", 5_000_000);
+
+        // Worker sanity test (imports failing will show as worker.onerror)
+        await testWorker(classWorkerURL);
 
         status("Calling ffmpeg.load()…");
         await withTimeout(
           ffmpeg.load({ coreURL, wasmURL, classWorkerURL }),
-          60000,          // 60s max; if it exceeds this, it’s not “slow”, it’s broken
+          60000,
           "ffmpeg.load()"
         );
 
@@ -241,7 +305,7 @@
         status("ERROR: " + err.message);
         els.initBtn.disabled = false;
         els.initBtn.textContent = "Retry Load";
-        alert("Engine failed to load. Check logs (very likely worker/core URL issue).");
+        alert("Engine failed to load. Check logs; it will usually show the exact missing/blocked file.");
       }
     }
 
@@ -304,6 +368,7 @@
 
     els.initBtn.addEventListener("click", loadEngine);
     els.convertBtn.addEventListener("click", convert);
+
     els.file.addEventListener("change", (e) => {
       if (e.target.files?.[0]) {
         els.fileName.textContent = e.target.files[0].name;
