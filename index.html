@@ -6,16 +6,12 @@
   <title>Media Converter</title>
 
   <!-- XP.css -->
-  <link rel="stylesheet" href="https://unpkg.com/xp.css" /> <!-- XP theme  [oai_citation:1‡botoxparty.github.io](https://botoxparty.github.io/XP.css/?utm_source=chatgpt.com) -->
+  <link rel="stylesheet" href="https://unpkg.com/xp.css" />
 
   <style>
-    body {
-      background: #3a6ea5; /* XP-ish desktop blue */
-      padding: 18px;
-    }
+    body { background: #3a6ea5; padding: 18px; }
     .app-wrap { max-width: 980px; margin: 0 auto; }
 
-    /* Keep your log aesthetics */
     .log-window {
       height: 240px;
       overflow-y: auto;
@@ -35,10 +31,8 @@
 
     .row { display: flex; gap: 12px; flex-wrap: wrap; }
     .col { flex: 1 1 300px; }
-    .small { font-size: 12px; opacity: 0.85; }
-
+    .small { font-size: 12px; opacity: 0.9; }
     .muted { opacity: 0.75; }
-    .pad { padding: 10px; }
     .mb8 { margin-bottom: 8px; }
     .mb12 { margin-bottom: 12px; }
     .mb16 { margin-bottom: 16px; }
@@ -51,10 +45,7 @@
       filter: grayscale(0.2);
     }
 
-    input[type="text"], input[type="number"], select {
-      width: 100%;
-      box-sizing: border-box;
-    }
+    input[type="text"], input[type="number"], select { width: 100%; box-sizing: border-box; }
 
     .dropzone {
       border: 2px dashed rgba(0,0,0,0.25);
@@ -70,12 +61,7 @@
       position:absolute; inset:0; width:100%; height:100%;
       opacity:0; cursor:pointer;
     }
-    .filename {
-      color: #0b57d0;
-      font-weight: 700;
-      margin-top: 6px;
-      word-break: break-all;
-    }
+    .filename { color: #0b57d0; font-weight: 700; margin-top: 6px; word-break: break-all; }
 
     .okbox {
       background: #eaffea;
@@ -84,7 +70,6 @@
       border-radius: 6px;
     }
     .okbox a { font-weight: 700; }
-
     details summary { cursor: pointer; }
   </style>
 </head>
@@ -102,9 +87,7 @@
       </div>
 
       <div class="window-body">
-        <p class="small muted mb16">
-          Runs entirely in your browser (no backend). If something fails, check the logs—ffmpeg will tell you exactly why.
-        </p>
+        <p class="small muted mb16">Runs entirely in your browser (no backend). Use logs for debugging.</p>
 
         <fieldset class="mb16">
           <legend>Engine</legend>
@@ -123,9 +106,7 @@
                 <button id="initBtn">Load Engine</button>
                 <button id="clearLogsBtn">Clear Logs</button>
               </div>
-              <div class="small muted mt8">
-                First load can be slower (WASM compile). Later loads are faster due to caching.
-              </div>
+              <div class="small muted mt8">First load may be slower (WASM compile). Later loads are faster.</div>
             </div>
           </div>
 
@@ -164,16 +145,12 @@
                   <option value="gif">GIF</option>
                 </optgroup>
 
-                <optgroup label="Experimental (may fail depending on wasm build)">
+                <optgroup label="Experimental (may fail)">
                   <option value="avi">AVI</option>
                   <option value="mkv">MKV</option>
                   <option value="flv">FLV</option>
                   <option value="wmv">WMV</option>
                   <option value="m2ts">AVCHD/M2TS</option>
-                </optgroup>
-
-                <optgroup label="Not supported in most browser builds (included for learning)">
-                  <option value="dsd">DSD (DSF/DFF) (likely unsupported)</option>
                 </optgroup>
               </select>
               <div id="formatNote" class="small muted mt8"></div>
@@ -182,9 +159,9 @@
             <div class="col">
               <label class="small"><b>Quality preset</b></label>
               <select id="qualityPreset">
-                <option value="standard">Standard (sane defaults)</option>
-                <option value="high">High (bigger + slower)</option>
-                <option value="custom">Custom (advanced controls)</option>
+                <option value="standard">Standard</option>
+                <option value="high">High</option>
+                <option value="custom">Custom (advanced)</option>
               </select>
 
               <div class="mt12">
@@ -206,18 +183,17 @@
           </div>
 
           <details id="advancedPanel" class="mb16">
-            <summary class="small"><b>Advanced controls</b> (bitrate / sample rate / fps / codec / scale)</summary>
+            <summary class="small"><b>Advanced controls</b></summary>
 
             <div class="row mt12">
               <div class="col">
                 <fieldset>
                   <legend>Audio</legend>
-
-                  <label class="small">Bitrate (kbps, e.g. 192 / 320)</label>
+                  <label class="small">Bitrate (kbps)</label>
                   <input id="audioBitrateK" type="number" min="8" step="1" placeholder="(leave blank)" />
 
                   <div class="mt12">
-                    <label class="small">Sample rate (Hz, e.g. 44100 / 48000)</label>
+                    <label class="small">Sample rate (Hz)</label>
                     <input id="audioSampleRate" type="number" min="8000" step="100" placeholder="(leave blank)" />
                   </div>
 
@@ -225,13 +201,9 @@
                     <label class="small">Channels</label>
                     <select id="audioChannels">
                       <option value="">(leave as-is)</option>
-                      <option value="1">Mono (1)</option>
-                      <option value="2">Stereo (2)</option>
+                      <option value="1">Mono</option>
+                      <option value="2">Stereo</option>
                     </select>
-                  </div>
-
-                  <div class="mt12 small muted">
-                    WAV/AIFF here are PCM by default. “BWAV” is basically WAV + extra metadata chunks; not guaranteed in wasm builds.
                   </div>
                 </fieldset>
               </div>
@@ -239,12 +211,11 @@
               <div class="col">
                 <fieldset>
                   <legend>Video</legend>
-
-                  <label class="small">FPS (e.g. 24 / 30 / 60)</label>
+                  <label class="small">FPS</label>
                   <input id="videoFps" type="number" min="1" step="1" placeholder="(leave blank)" />
 
                   <div class="mt12">
-                    <label class="small">Scale (width:-1, e.g. 1280:-1)</label>
+                    <label class="small">Scale (width:-1)</label>
                     <input id="videoScale" type="text" placeholder="(leave blank)" />
                   </div>
 
@@ -252,20 +223,16 @@
                     <label class="small">Codec</label>
                     <select id="videoCodec">
                       <option value="">(auto)</option>
-                      <option value="libx264">H.264 (libx264) for MP4/MOV</option>
-                      <option value="libvpx-vp9">VP9 (libvpx-vp9) for WebM</option>
-                      <option value="libvpx">VP8 (libvpx) for WebM</option>
-                      <option value="mpeg4">MPEG-4 (mpeg4) (often works for AVI)</option>
+                      <option value="libx264">H.264 (libx264)</option>
+                      <option value="libvpx-vp9">VP9</option>
+                      <option value="libvpx">VP8</option>
+                      <option value="mpeg4">MPEG-4 (mpeg4)</option>
                     </select>
                   </div>
 
                   <div class="mt12">
-                    <label class="small">CRF (quality/size, lower=better)</label>
-                    <input id="videoCrf" type="number" min="0" max="51" step="1" placeholder="e.g. 23 (leave blank)" />
-                  </div>
-
-                  <div class="mt12 small muted">
-                    Container ≠ codec. “MOV” is just a container like MP4; you still need an encoder the wasm build includes.
+                    <label class="small">CRF</label>
+                    <input id="videoCrf" type="number" min="0" max="51" step="1" placeholder="(leave blank)" />
                   </div>
                 </fieldset>
               </div>
@@ -275,17 +242,12 @@
               <div class="col">
                 <fieldset>
                   <legend>GIF</legend>
-
-                  <label class="small">GIF FPS (e.g. 12 / 15 / 24)</label>
+                  <label class="small">GIF FPS</label>
                   <input id="gifFps" type="number" min="1" step="1" placeholder="(leave blank)" />
 
                   <div class="mt12">
                     <label class="small">GIF scale (width:-1)</label>
-                    <input id="gifScale" type="text" placeholder="e.g. 640:-1 (leave blank)" />
-                  </div>
-
-                  <div class="mt12 small muted">
-                    This uses a fast/simple GIF path. Palette-based GIF is higher quality but slower—can add later if you want.
+                    <input id="gifScale" type="text" placeholder="(leave blank)" />
                   </div>
                 </fieldset>
               </div>
@@ -304,72 +266,358 @@
   </div>
 
   <script type="module">
-    import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
-    import { fetchFile } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
+    // If anything throws during init, you'll see it.
+    try {
+      import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
+      import { fetchFile } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
 
-    const BUILD = "20260110_006";
+      const BUILD = "20260110_006_fix1";
 
-    const els = {
-      initBtn: document.getElementById("initBtn"),
-      clearLogsBtn: document.getElementById("clearLogsBtn"),
-      status: document.getElementById("statusMsg"),
-      app: document.getElementById("appInterface"),
-      file: document.getElementById("fileInput"),
-      fileName: document.getElementById("fileName"),
-      format: document.getElementById("format"),
-      formatNote: document.getElementById("formatNote"),
-      qualityPreset: document.getElementById("qualityPreset"),
-      advancedPanel: document.getElementById("advancedPanel"),
-      nameMode: document.getElementById("nameMode"),
-      customBaseName: document.getElementById("customBaseName"),
-      convertBtn: document.getElementById("convertBtn"),
-      logs: document.getElementById("logs"),
-      dlLink: document.getElementById("dlLink"),
-      output: document.getElementById("outputArea"),
+      const els = {
+        initBtn: document.getElementById("initBtn"),
+        clearLogsBtn: document.getElementById("clearLogsBtn"),
+        status: document.getElementById("statusMsg"),
+        app: document.getElementById("appInterface"),
+        file: document.getElementById("fileInput"),
+        fileName: document.getElementById("fileName"),
+        format: document.getElementById("format"),
+        formatNote: document.getElementById("formatNote"),
+        qualityPreset: document.getElementById("qualityPreset"),
+        advancedPanel: document.getElementById("advancedPanel"),
+        nameMode: document.getElementById("nameMode"),
+        customBaseName: document.getElementById("customBaseName"),
+        convertBtn: document.getElementById("convertBtn"),
+        logs: document.getElementById("logs"),
+        dlLink: document.getElementById("dlLink"),
+        output: document.getElementById("outputArea"),
 
-      audioBitrateK: document.getElementById("audioBitrateK"),
-      audioSampleRate: document.getElementById("audioSampleRate"),
-      audioChannels: document.getElementById("audioChannels"),
+        audioBitrateK: document.getElementById("audioBitrateK"),
+        audioSampleRate: document.getElementById("audioSampleRate"),
+        audioChannels: document.getElementById("audioChannels"),
 
-      videoFps: document.getElementById("videoFps"),
-      videoScale: document.getElementById("videoScale"),
-      videoCodec: document.getElementById("videoCodec"),
-      videoCrf: document.getElementById("videoCrf"),
+        videoFps: document.getElementById("videoFps"),
+        videoScale: document.getElementById("videoScale"),
+        videoCodec: document.getElementById("videoCodec"),
+        videoCrf: document.getElementById("videoCrf"),
 
-      gifFps: document.getElementById("gifFps"),
-      gifScale: document.getElementById("gifScale"),
-    };
+        gifFps: document.getElementById("gifFps"),
+        gifScale: document.getElementById("gifScale"),
+      };
 
-    const ts = () => new Date().toLocaleTimeString();
-    function log(msg) {
-      const line = document.createElement("div");
-      line.textContent = `[${ts()}] ${msg}`;
-      els.logs.appendChild(line);
-      els.logs.scrollTop = els.logs.scrollHeight;
-      console.log(msg);
+      const ts = () => new Date().toLocaleTimeString();
+      function log(msg) {
+        const line = document.createElement("div");
+        line.textContent = `[${ts()}] ${msg}`;
+        els.logs.appendChild(line);
+        els.logs.scrollTop = els.logs.scrollHeight;
+        console.log(msg);
+      }
+      function status(msg) {
+        els.status.textContent = msg;
+        log(`STATUS → ${msg}`);
+      }
+
+      log("✅ Script loaded. BUILD = " + BUILD);
+
+      window.addEventListener("error", (e) => log(`❌ window.error: ${e.message} @ ${e.filename || ""}:${e.lineno || ""}`));
+      window.addEventListener("unhandledrejection", (e) => log(`❌ unhandledrejection: ${e.reason?.message || e.reason}`));
+
+      els.clearLogsBtn.addEventListener("click", () => {
+        els.logs.innerHTML = "";
+        log("Logs cleared.");
+        log("BUILD = " + BUILD);
+      });
+
+      // Worker debug patch (kept)
+      (function patchWorkerForDebug() {
+        const NativeWorker = window.Worker;
+        if (!NativeWorker || NativeWorker.__patched_for_ffmpeg_debug__) return;
+
+        function DebugWorker(specifier, options) {
+          const optStr = options ? JSON.stringify(options) : "(none)";
+          log(`🧵 Worker created → ${String(specifier)} opts=${optStr}`);
+          const w = new NativeWorker(specifier, options);
+
+          w.addEventListener("error", (e) => log(`❌ Worker error: ${e.message || "error"} @ ${e.filename || ""}:${e.lineno || ""}`));
+          w.addEventListener("messageerror", () => log("❌ Worker messageerror: could not deserialize message"));
+
+          let msgCount = 0;
+          w.addEventListener("message", (ev) => {
+            msgCount++;
+            if (msgCount <= 5) {
+              let preview;
+              try { preview = JSON.stringify(ev.data); } catch { preview = String(ev.data); }
+              log(`🧵 Worker message[${msgCount}] → ${preview.slice(0, 450)}`);
+            }
+          });
+
+          return w;
+        }
+
+        DebugWorker.prototype = NativeWorker.prototype;
+        DebugWorker.__patched_for_ffmpeg_debug__ = true;
+        window.Worker = DebugWorker;
+        log("✅ Patched window.Worker for debug");
+      })();
+
+      // ✅ FIX: define syncNameUI (was missing before)
+      function syncNameUI() {
+        const isCustom = els.nameMode.value === "custom";
+        els.customBaseName.disabled = !isCustom;
+      }
+      els.nameMode.addEventListener("change", syncNameUI);
+      syncNameUI();
+
+      // open advanced when custom preset
+      els.qualityPreset.addEventListener("change", () => {
+        if (els.qualityPreset.value === "custom") els.advancedPanel.open = true;
+      });
+
+      const FORMAT_META = {
+        mp3:{tier:"recommended",note:"MP3 output."},
+        m4a:{tier:"recommended",note:"M4A container (usually AAC)."},
+        aac:{tier:"recommended",note:"AAC audio."},
+        wav:{tier:"recommended",note:"WAV PCM (forced pcm_s16le)."},
+        flac:{tier:"recommended",note:"Lossless FLAC."},
+        aiff:{tier:"recommended",note:"AIFF PCM (forced pcm_s16be)."},
+        ogg:{tier:"recommended",note:"Ogg Vorbis (if encoder present)."},
+        opus:{tier:"recommended",note:"Opus in Ogg (if encoder present)."},
+        mp4:{tier:"recommended",note:"MP4 container."},
+        mov:{tier:"recommended",note:"MOV container."},
+        webm:{tier:"recommended",note:"WebM container."},
+        gif:{tier:"recommended",note:"GIF."},
+        avi:{tier:"experimental",note:"AVI (may fail). Try codec=mpeg4 if needed."},
+        mkv:{tier:"experimental",note:"MKV (may fail)."},
+        flv:{tier:"experimental",note:"FLV (may fail)."},
+        wmv:{tier:"experimental",note:"WMV export often fails in wasm builds."},
+        m2ts:{tier:"experimental",note:"AVCHD/M2TS likely to fail."},
+      };
+
+      function onFormatChanged() {
+        const ext = els.format.value;
+        const meta = FORMAT_META[ext];
+        if (!meta) { els.formatNote.textContent = ""; return; }
+        els.formatNote.textContent = (meta.tier === "experimental" ? "⚠️ " : "") + meta.note;
+        if (meta.tier === "experimental") log(`⚠️ Selected experimental format: ${ext}`);
+      }
+      els.format.addEventListener("change", onFormatChanged);
+      onFormatChanged();
+
+      const mimeFor = (ext) => ({
+        mp3:"audio/mpeg", m4a:"audio/mp4", aac:"audio/aac", wav:"audio/wav",
+        flac:"audio/flac", aiff:"audio/aiff", ogg:"audio/ogg", opus:"audio/ogg",
+        mp4:"video/mp4", mov:"video/quicktime", webm:"video/webm", gif:"image/gif",
+        avi:"video/x-msvideo", mkv:"video/x-matroska", flv:"video/x-flv", wmv:"video/x-ms-wmv", m2ts:"video/mp2t",
+      }[ext] || "application/octet-stream");
+
+      function withTimeout(promise, ms, label) {
+        let t;
+        const timeout = new Promise((_, rej) => {
+          t = setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms);
+        });
+        return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+      }
+
+      async function assertFetchable(url, label, minBytes) {
+        status(`Checking ${label}…`);
+        log(`${label} url = ${url}`);
+        const resp = await fetch(url, { cache:"no-store" });
+        log(`${label} HTTP ${resp.status}`);
+        const buf = await resp.arrayBuffer();
+        const bytes = buf.byteLength;
+        log(`${label} downloaded = ${bytes} bytes`);
+        if (!resp.ok) throw new Error(`${label} fetch failed: HTTP ${resp.status}`);
+        if (bytes < minBytes) throw new Error(`${label} too small (${bytes} bytes)`);
+      }
+
+      function safeBaseName(s) {
+        const noExt = s.replace(/\.[^.]+$/, "");
+        return noExt.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") || "converted";
+      }
+      function buildDownloadName(originalName, outExt) {
+        if (els.nameMode.value === "custom") {
+          const base = (els.customBaseName.value || "").trim();
+          const cleaned = base.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_");
+          return `${cleaned || "converted"}.${outExt}`;
+        }
+        const base = safeBaseName(originalName || "input");
+        return `${base}_to_${outExt}.${outExt}`;
+      }
+      function addIf(args, cond, ...parts) { if (cond) args.push(...parts); }
+
+      function collectArgs(outExt, preset) {
+        const args = [];
+        const isAudio = ["mp3","m4a","aac","wav","flac","aiff","ogg","opus"].includes(outExt);
+        const isVideo = ["mp4","mov","webm","avi","mkv","flv","wmv","m2ts"].includes(outExt);
+        const isGif = outExt === "gif";
+        const custom = preset === "custom";
+
+        const audioBitrateK = custom && els.audioBitrateK.value !== "" ? Number(els.audioBitrateK.value) : null;
+        const audioSampleRate = custom && els.audioSampleRate.value !== "" ? Number(els.audioSampleRate.value) : null;
+        const audioChannels = custom ? (els.audioChannels.value || "") : "";
+
+        const videoFps = custom && els.videoFps.value !== "" ? Number(els.videoFps.value) : null;
+        const videoScale = custom ? (els.videoScale.value || "").trim() : "";
+        const videoCodec = custom ? (els.videoCodec.value || "").trim() : "";
+        const videoCrf = custom && els.videoCrf.value !== "" ? Number(els.videoCrf.value) : null;
+
+        const gifFps = custom && els.gifFps.value !== "" ? Number(els.gifFps.value) : null;
+        const gifScale = custom ? (els.gifScale.value || "").trim() : "";
+
+        if (isAudio) {
+          args.push("-vn");
+          if (outExt === "wav") addIf(args, true, "-c:a", "pcm_s16le");
+          if (outExt === "aiff") addIf(args, true, "-c:a", "pcm_s16be");
+          if (outExt === "mp3") addIf(args, true, "-c:a", "libmp3lame");
+          if (outExt === "ogg") addIf(args, true, "-c:a", "libvorbis");
+          if (outExt === "opus") addIf(args, true, "-c:a", "libopus");
+          if (outExt === "m4a" || outExt === "aac") addIf(args, true, "-c:a", "aac");
+
+          if (preset === "high") {
+            addIf(args, ["mp3","aac","m4a","ogg","opus"].includes(outExt), "-b:a", "320k");
+            addIf(args, true, "-ar", "48000");
+          } else if (custom) {
+            addIf(args, audioBitrateK != null && Number.isFinite(audioBitrateK), "-b:a", `${audioBitrateK}k`);
+            addIf(args, audioSampleRate != null && Number.isFinite(audioSampleRate), "-ar", `${audioSampleRate}`);
+            addIf(args, audioChannels === "1" || audioChannels === "2", "-ac", audioChannels);
+          }
+        }
+
+        if (isVideo) {
+          if (preset === "high") addIf(args, true, "-r", "60");
+          if (custom) {
+            addIf(args, videoFps != null && Number.isFinite(videoFps) && videoFps > 0, "-r", `${videoFps}`);
+            addIf(args, videoScale.length > 0, "-vf", `scale=${videoScale}`);
+            addIf(args, videoCodec.length > 0, "-c:v", videoCodec);
+            addIf(args, videoCrf != null && Number.isFinite(videoCrf), "-crf", `${videoCrf}`);
+          }
+        }
+
+        if (isGif) {
+          if (preset === "high") addIf(args, true, "-r", "24");
+          if (custom) {
+            addIf(args, gifFps != null && Number.isFinite(gifFps), "-r", `${gifFps}`);
+            addIf(args, gifScale.length > 0, "-vf", `scale=${gifScale}`);
+          }
+        }
+
+        return args;
+      }
+
+      let ffmpeg = null;
+      let engineLoaded = false;
+
+      async function loadEngine() {
+        els.initBtn.disabled = true;
+        els.convertBtn.disabled = true;
+        els.output.style.display = "none";
+        engineLoaded = false;
+
+        try {
+          status("Starting engine bootstrap…");
+
+          ffmpeg = new FFmpeg();
+          ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
+          ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
+
+          const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
+          const coreURL = `${base}/ffmpeg-core.js`;
+          const wasmURL = `${base}/ffmpeg-core.wasm`;
+
+          const classWorkerURL = new URL(`./worker.js?v=${BUILD}`, import.meta.url).toString();
+          const constURL = new URL(`./const.js?v=${BUILD}`, import.meta.url).toString();
+          const errorsURL = new URL(`./errors.js?v=${BUILD}`, import.meta.url).toString();
+
+          await assertFetchable(classWorkerURL, "worker.js (local)", 1000);
+          await assertFetchable(constURL, "const.js (local)", 200);
+          await assertFetchable(errorsURL, "errors.js (local)", 200);
+          await assertFetchable(coreURL, "ffmpeg-core.js (CDN)", 50_000);
+          await assertFetchable(wasmURL, "ffmpeg-core.wasm (CDN)", 5_000_000);
+
+          status("Calling ffmpeg.load()…");
+          await withTimeout(ffmpeg.load({ coreURL, wasmURL, classWorkerURL }), 90000, "ffmpeg.load()");
+
+          engineLoaded = true;
+          status("Engine Ready. Select a file.");
+          els.app.classList.remove("disabled");
+          els.convertBtn.disabled = !els.file.files?.[0];
+          els.initBtn.textContent = "Engine Loaded";
+          log("Ready.");
+        } catch (err) {
+          console.error(err);
+          status("ERROR: " + (err?.message || String(err)));
+          els.initBtn.disabled = false;
+          els.initBtn.textContent = "Retry Load";
+          alert("Engine failed to load. Check logs.");
+        }
+      }
+
+      async function convert() {
+        const file = els.file.files[0];
+        if (!file || !engineLoaded) return;
+
+        els.convertBtn.disabled = true;
+        els.output.style.display = "none";
+        status("Preparing…");
+
+        const inputName = `input_${Date.now()}`;
+        const outExt = els.format.value;
+        const preset = els.qualityPreset.value;
+        const outputName = `output_${Date.now()}.${outExt}`;
+
+        try {
+          status("Writing input file…");
+          await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+          const args = ["-i", inputName, ...collectArgs(outExt, preset), outputName];
+          log("Exec: " + args.join(" "));
+          status("Converting…");
+          await ffmpeg.exec(args);
+
+          status("Reading output…");
+          const data = await ffmpeg.readFile(outputName);
+
+          const blob = new Blob([data.buffer], { type: mimeFor(outExt) });
+          els.dlLink.href = URL.createObjectURL(blob);
+
+          const dlName = buildDownloadName(file.name, outExt);
+          els.dlLink.download = dlName;
+          log("Download name: " + dlName);
+
+          els.output.style.display = "block";
+          status("Complete!");
+        } catch (err) {
+          console.error(err);
+          log("Convert error: " + (err?.message || String(err)));
+          alert("Conversion failed. Check logs.");
+        } finally {
+          try { await ffmpeg.deleteFile(inputName); } catch {}
+          try { await ffmpeg.deleteFile(outputName); } catch {}
+          els.convertBtn.disabled = false;
+        }
+      }
+
+      // ✅ Attach handlers (so "Load Engine" works)
+      els.initBtn.addEventListener("click", () => {
+        log("▶ Load Engine clicked");
+        loadEngine();
+      });
+
+      els.convertBtn.addEventListener("click", convert);
+
+      els.file.addEventListener("change", (e) => {
+        if (e.target.files?.[0]) {
+          els.fileName.textContent = e.target.files[0].name;
+          els.fileName.style.display = "block";
+          els.convertBtn.disabled = !engineLoaded;
+        }
+      });
+
+    } catch (e) {
+      // If module init throws before we can log, at least show an alert.
+      alert("Fatal init error: " + (e?.message || String(e)));
+      console.error(e);
     }
-    function status(msg) {
-      els.status.textContent = msg;
-      log(`STATUS → ${msg}`);
-    }
-
-    window.addEventListener("error", (e) => log(`❌ window.error: ${e.message} @ ${e.filename || ""}:${e.lineno || ""}`));
-    window.addEventListener("unhandledrejection", (e) => log(`❌ unhandledrejection: ${e.reason?.message || e.reason}`));
-
-    els.clearLogsBtn.addEventListener("click", () => {
-      els.logs.innerHTML = "";
-      log("Logs cleared.");
-      log("BUILD = " + BUILD);
-    });
-
-    // Deep debug: patch Worker to see internal worker errors
-    (function patchWorkerForDebug() {
-      const NativeWorker = window.Worker;
-      if (!NativeWorker || NativeWorker.__patched_for_ffmpeg_debug__) return;
-
-      function DebugWorker(specifier, options) {
-        const optStr = options ? JSON.stringify(options) : "(none)";
-        log(`🧵 Worker created → ${String(specifier)} opts=${optStr}`);
-        const w = new NativeWorker(specifier, options);
-
-        w.addEventListener("error", (e) =>
+  </script>
+</body>
+</html>
