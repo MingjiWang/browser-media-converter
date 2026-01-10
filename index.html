@@ -253,8 +253,9 @@
         ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
 
         // Core + WASM from CDN (matched versions)
-        const coreURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js";
-        const wasmURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm";
+        const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
+        const coreURL = `${base}/ffmpeg-core.js`;
+        const wasmURL = `${base}/ffmpeg-core.wasm`;
 
         // Local ESM worker and its local imports MUST exist:
         // worker.js imports ./const.js and ./errors.js
