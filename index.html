@@ -2,268 +2,135 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Media Converter (XP.css • Cyberpunk)</title>
+  <title>Media Converter (XP.css)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Windows XP UI style -->
   <link rel="stylesheet" href="https://unpkg.com/xp.css" />
 
   <style>
-    /* === Keep your XP pixel font override === */
+    /* XP pixel font override (same pattern as your reference) */
     body, .app, .app * {
       font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Arial, sans-serif !important;
       -webkit-font-smoothing: none;
       font-size: 15px;
     }
 
-    /* === Cyberpunk skin on top of XP.css === */
-    :root{
-      --neo-bg0:#05070f;
-      --neo-bg1:#070a16;
-      --neo-panel: rgba(6, 10, 25, .72);
-      --neo-border: rgba(120, 255, 240, .35);
-      --neo-border2: rgba(255, 90, 240, .30);
-      --neo-cyan:#52fff0;
-      --neo-mag:#ff57f1;
-      --neo-yellow:#ffe56a;
-      --neo-text:#e8f1ff;
-      --neo-dim:#a9b7d6;
-      --neo-danger:#ff4d6d;
-      --neo-ok:#42ff9b;
-      --neo-shadow: 0 14px 40px rgba(0,0,0,.55);
-      --neo-glow: 0 0 12px rgba(82,255,240,.35), 0 0 28px rgba(255,87,241,.18);
-    }
+    body { margin: 16px; background: #d4d0c8; }
+    .app { max-width: 980px; margin: 0 auto; }
 
-    body{
-      margin: 16px;
-      color: var(--neo-text);
-      background:
-        radial-gradient(1200px 700px at 10% 10%, rgba(82,255,240,.14), transparent 60%),
-        radial-gradient(900px 600px at 90% 20%, rgba(255,87,241,.12), transparent 55%),
-        radial-gradient(700px 520px at 65% 90%, rgba(255,229,106,.08), transparent 55%),
-        linear-gradient(180deg, var(--neo-bg0), var(--neo-bg1));
-      overflow-x: hidden;
-    }
-
-    /* subtle moving scanlines */
-    body::before{
-      content:"";
-      position: fixed;
-      inset:0;
-      pointer-events:none;
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          rgba(255,255,255,0.025) 0px,
-          rgba(255,255,255,0.025) 1px,
-          rgba(0,0,0,0) 3px,
-          rgba(0,0,0,0) 6px
-        );
-      mix-blend-mode: overlay;
-      opacity:.35;
-      animation: scan 7s linear infinite;
-    }
-    @keyframes scan{
-      from{ transform: translateY(0); }
-      to{ transform: translateY(24px); }
-    }
-
-    .app{ max-width: 1040px; margin: 0 auto; }
-
-    /* XP window becomes a neon “glass” panel */
-    .window{
-      background: var(--neo-panel);
-      border: 1px solid rgba(255,255,255,.08);
-      box-shadow: var(--neo-shadow);
-      backdrop-filter: blur(8px);
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* animated border glow */
-    .window::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      border-radius: 2px;
-      background: linear-gradient(90deg, rgba(82,255,240,.35), rgba(255,87,241,.35), rgba(255,229,106,.18));
-      filter: blur(10px);
-      opacity: .32;
-      pointer-events:none;
-    }
-    .window::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(900px 200px at 10% 0%, rgba(82,255,240,.12), transparent 60%),
-        radial-gradient(900px 200px at 90% 0%, rgba(255,87,241,.10), transparent 60%);
-      opacity: .8;
-    }
-
-    /* Keep XP title bar, but neon it */
-    .title-bar{
-      background: linear-gradient(90deg, rgba(18, 28, 62, .95), rgba(10, 18, 40, .95));
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      box-shadow: 0 1px 0 rgba(0,0,0,.35) inset;
-      position: relative;
-      z-index: 2;
-    }
-    .title-bar-text{
-      color: var(--neo-text);
-      text-shadow: 0 0 10px rgba(82,255,240,.22);
-      letter-spacing: .02em;
-    }
-
-    /* title bar controls: tiny neon */
-    .title-bar-controls button{
-      filter: saturate(1.2) brightness(1.05);
-      box-shadow: 0 0 10px rgba(82,255,240,.08);
-    }
-
-    .window-body{
-      position: relative;
-      z-index: 2;
-      color: var(--neo-text);
-    }
-
-    .subtitle { margin: 8px 0 12px; font-size: 0.9rem; color: var(--neo-dim); }
-    .hint { font-size: 0.8rem; margin: 4px 0; color: var(--neo-dim); }
-    .small { font-size: 0.8rem; }
-    .muted { opacity: 0.86; color: var(--neo-dim); }
-
-    hr{
-      border: none;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(82,255,240,.25), rgba(255,87,241,.25), transparent);
-      margin: 14px 0;
-    }
-
-    .section-title{
-      font-size: 0.88rem;
+    .section-title {
+      font-size: 0.9rem;
       font-weight: 700;
       margin: 12px 0 6px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--neo-text);
-      text-shadow: 0 0 14px rgba(255,87,241,.12);
-    }
-    .section-title::before{
-      content:"▸";
-      color: var(--neo-cyan);
-      margin-right: 6px;
-      text-shadow: 0 0 14px rgba(82,255,240,.35);
+      letter-spacing: 0.06em;
     }
 
-    .two-column{
+    .subtitle { margin: 6px 0 10px; font-size: 0.9rem; }
+    .hint { font-size: 0.8rem; margin: 4px 0; }
+    .small { font-size: 0.8rem; }
+    .muted { opacity: 0.85; }
+
+    .two-column {
       display: grid;
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
       gap: 16px;
     }
-    @media (max-width: 720px){ .two-column{ grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .two-column { grid-template-columns: 1fr; } }
 
-    .badge{
+    .drop-zone {
+      border: 2px dashed #808080;
+      background: #ffffff;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .drop-zone--hover { background: #cce4ff; }
+    .drop-zone input[type="file"] { display:none; }
+
+    .badge {
       display: inline-block;
       padding: 2px 6px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.06);
+      border: 1px solid #808080;
+      background: #d4d0c8;
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-right: 4px;
-      color: var(--neo-text);
-      box-shadow: var(--neo-glow);
     }
 
-    /* Inputs: cyber gloss */
-    input[type="text"], input[type="number"], select{
-      background: rgba(0,0,0,.35) !important;
-      color: var(--neo-text) !important;
-      border: 1px solid rgba(255,255,255,.18) !important;
-      box-shadow: 0 0 0 1px rgba(82,255,240,.10) inset;
-      border-radius: 0 !important; /* keep XP-ish corners */
-      outline: none;
-    }
-    input::placeholder{ color: rgba(233,241,255,.55); }
-
-    /* Buttons: neon press */
-    button{
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.10)) !important;
-      color: var(--neo-text) !important;
-      border: 1px solid rgba(255,255,255,.18) !important;
-      box-shadow: 0 0 0 1px rgba(82,255,240,.10) inset, var(--neo-glow);
-    }
-    button:active{
-      transform: translateY(1px);
-      box-shadow: 0 0 0 1px rgba(255,87,241,.18) inset, 0 0 16px rgba(82,255,240,.18);
-    }
-
-    /* Drop zone: neon frame + grid */
-    .drop-zone{
-      border: 2px dashed rgba(82,255,240,.55);
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.42)),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 14px),
-        repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 14px);
-      padding: 12px;
-      text-align:center;
-      cursor:pointer;
-      margin-bottom: 8px;
+    /* Log window styling (XP-ish) */
+    #log {
       position: relative;
-      box-shadow: var(--neo-glow);
-    }
-    .drop-zone--hover{
-      background:
-        linear-gradient(180deg, rgba(82,255,240,.10), rgba(0,0,0,.48)),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0, rgba(255,255,255,.04) 1px, transparent 1px, transparent 14px),
-        repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0, rgba(255,255,255,.04) 1px, transparent 1px, transparent 14px);
-    }
-
-    /* Log window keeps your feel but more “terminal neon” */
-    #log{
-      background: rgba(0,0,0,.72);
-      color: #a7ffcf;
-      border: 1px solid rgba(82,255,240,.30);
+      background: #000;
+      color: #e2e8f0;
+      padding: 8px 10px;
+      border: 1px solid #808080;
       height: 240px;
       overflow-y: auto;
       font-family: monospace !important;
       font-size: 0.8rem;
       white-space: pre-wrap;
-      box-shadow: var(--neo-glow);
+      margin-top: 8px;
     }
 
-    /* Link download: neon underline */
-    a#dl{
-      color: var(--neo-cyan);
-      text-decoration: none;
-      border-bottom: 1px dashed rgba(82,255,240,.55);
-      padding-bottom: 1px;
-    }
-    a#dl:hover{
-      color: var(--neo-yellow);
-      border-bottom-color: rgba(255,229,106,.65);
-      text-shadow: 0 0 10px rgba(255,229,106,.20);
+    .field-row { margin-bottom: 10px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+    .row > * { flex: 1 1 auto; }
+
+    input[type="text"], input[type="number"], select {
+      min-width: 220px;
     }
 
-    .field-row{ margin-bottom: 10px; }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .row > *{ flex: 1 1 auto; }
-    input[type="text"], input[type="number"], select{ min-width: 220px; }
-
-    .disabled{
+    .disabled {
       opacity: 0.55;
       pointer-events: none;
-      filter: grayscale(0.1);
+      filter: grayscale(0.15);
     }
 
-    /* Status bar: neon separator */
-    .status-bar{
-      background: rgba(0,0,0,.18);
-      border-top: 1px solid rgba(82,255,240,.18);
-      color: var(--neo-dim);
-      position: relative;
-      z-index: 2;
+    /* Help blocks */
+    .help {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #222;
+      background: #fff;
+      border: 1px solid #808080;
+      padding: 6px 8px;
+      line-height: 1.35;
+    }
+    .help code { font-size: 0.8rem; }
+
+    details summary { cursor: pointer; }
+    details summary:hover { text-decoration: underline; }
+
+    .help-list { margin: 6px 0 0; padding-left: 18px; }
+    .help-list li { margin: 4px 0; }
+    .help kbd {
+      border: 1px solid #808080;
+      background: #d4d0c8;
+      padding: 0 4px;
+      font-size: 0.75rem;
+    }
+
+    .status-inline {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 1px 6px;
+      border: 1px solid #808080;
+      background: #fff;
+      font-size: 0.8rem;
+    }
+
+    /* Small note under advanced sections */
+    .note {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: #333;
+      opacity: 0.9;
     }
   </style>
 </head>
@@ -272,7 +139,7 @@
   <div class="app">
     <div class="window">
       <div class="title-bar">
-        <div class="title-bar-text">Browser Media Converter (FFmpeg.wasm • XP Cyber)</div>
+        <div class="title-bar-text">Browser Media Converter (FFmpeg.wasm)</div>
         <div class="title-bar-controls">
           <button aria-label="Minimize"></button>
           <button aria-label="Maximize"></button>
@@ -290,8 +157,8 @@
             <div class="section-title">How to use</div>
             <ol class="small">
               <li>Click <b>Load Engine</b> (first load may take time).</li>
-              <li>Drop a file (audio or video).</li>
-              <li>Choose output format + quality controls.</li>
+              <li>Drop a file (audio or video) or click the drop area.</li>
+              <li>Choose output format + preset (or advanced settings).</li>
               <li>Click <b>Convert</b> and download the result.</li>
             </ol>
 
@@ -313,10 +180,15 @@
 
         <div class="section-title">0. Engine</div>
         <div class="field-row">
-          <div class="row">
+          <div class="row" style="align-items:center;">
             <button id="initBtn">Load Engine</button>
             <button id="clearBtn">Clear Log</button>
             <span class="small muted" id="status">Idle.</span>
+            <span class="status-inline" id="statusBadge">Engine: not loaded</span>
+          </div>
+          <div class="help">
+            <b>Tip:</b> First load downloads + compiles the FFmpeg WASM core. After caching, reloads are faster.
+            If it “hangs”, check the <b>Log</b> — Worker import/URL issues show up there.
           </div>
         </div>
 
@@ -332,6 +204,9 @@
             or click to choose a file.
             <div class="small muted" id="fileLabel" style="margin-top:6px;"></div>
             <input type="file" id="fileInput" />
+          </div>
+          <div class="help">
+            Works best for small-to-medium files. Very large files can hit browser memory limits.
           </div>
 
           <div class="section-title">2. Output</div>
@@ -364,6 +239,10 @@
               </optgroup>
             </select>
             <div class="small muted" id="formatNote" style="margin-top:6px;"></div>
+            <div class="help">
+              <b>Container</b> (MP4/MOV/WEBM) ≠ <b>codec</b> (H.264/VP9/etc). If an output fails,
+              try MP4 + H.264 or WebM + VP8/VP9 (see Advanced → Codec).
+            </div>
           </div>
 
           <div class="field-row">
@@ -375,32 +254,62 @@
               </select>
               <input id="customName" type="text" placeholder="custom base name (no extension)" disabled />
             </div>
-            <div class="small muted" style="margin-top:6px;">
-              Auto = <code>originalName_to_FORMAT.ext</code>
+            <div class="help">
+              <b>Auto</b> uses <code>originalName_to_EXT.ext</code> (safe characters only).<br/>
+              <b>Custom</b> uses your base name and the tool adds the extension.
             </div>
           </div>
 
           <div class="field-row">
             <label class="small"><b>Quality preset</b></label><br/>
             <select id="preset">
-              <option value="standard">Standard</option>
-              <option value="high">High</option>
+              <option value="standard">Standard (safe)</option>
+              <option value="high">High (bigger file)</option>
               <option value="custom">Custom (advanced)</option>
             </select>
+            <div class="help">
+              <b>Standard</b>: minimal options; safest across formats.<br/>
+              <b>High</b>: sets stronger defaults (e.g. 320k audio bitrate / 48kHz; 60fps video).<br/>
+              <b>Custom</b>: unlocks the Advanced section. Leave fields blank to keep input defaults.
+            </div>
           </div>
 
           <details id="advanced" class="field-row">
-            <summary class="small"><b>Advanced controls</b></summary>
+            <summary class="small"><b>Advanced settings (what each does)</b></summary>
+
+            <div class="help">
+              These map to FFmpeg flags. You can copy the “Exec:” line from the Log and run it on desktop FFmpeg too.
+              <ul class="help-list">
+                <li><b>Audio bitrate</b> (<code>-b:a</code>): for lossy audio. Higher → larger file.</li>
+                <li><b>Sample rate</b> (<code>-ar</code>): resample audio. Common: <code>44100</code>, <code>48000</code>.</li>
+                <li><b>Channels</b> (<code>-ac</code>): force mono/stereo. Mono reduces size.</li>
+                <li><b>FPS</b> (<code>-r</code>): force frame rate. Higher fps increases work/size.</li>
+                <li><b>Scale</b> (<code>-vf scale=W:H</code>): resize video/GIF. Use <code>1280:-1</code> to keep aspect ratio.</li>
+                <li><b>Codec</b> (<code>-c:v</code>): encoder choice. If output fails, try <code>mpeg4</code>.</li>
+                <li><b>CRF</b> (<code>-crf</code>): quality knob (lower=better) for codecs that support it (esp. H.264/VP9).</li>
+              </ul>
+              <b>Quick recipes:</b><br/>
+              • Smaller MP4: <code>scale=1280:-1</code>, <code>crf=26</code>, <code>fps=30</code><br/>
+              • Good audio: <code>mp3 320k</code> or <code>aac 256k</code>, <code>48kHz</code><br/>
+              • If encode fails: switch video codec to <code>mpeg4</code> or output to WebM.
+            </div>
 
             <div class="section-title">Audio</div>
             <div class="row">
               <div>
                 <div class="small">Bitrate (kbps)</div>
                 <input id="ab" type="number" min="8" step="1" placeholder="e.g. 320" />
+                <div class="help">
+                  Sets audio bitrate (<code>-b:a</code>). Only matters for lossy formats (MP3/AAC/OGG/Opus).<br/>
+                  Examples: <code>128</code> (small), <code>192</code> (balanced), <code>320</code> (high).
+                </div>
               </div>
               <div>
                 <div class="small">Sample rate (Hz)</div>
                 <input id="ar" type="number" min="8000" step="100" placeholder="e.g. 48000" />
+                <div class="help">
+                  Resamples audio (<code>-ar</code>). Common: <code>44100</code> for music, <code>48000</code> for video.
+                </div>
               </div>
               <div>
                 <div class="small">Channels</div>
@@ -409,6 +318,9 @@
                   <option value="1">Mono</option>
                   <option value="2">Stereo</option>
                 </select>
+                <div class="help">
+                  Forces channel count (<code>-ac</code>). Mono is good for speech/podcasts.
+                </div>
               </div>
             </div>
 
@@ -417,10 +329,16 @@
               <div>
                 <div class="small">FPS</div>
                 <input id="vfps" type="number" min="1" step="1" placeholder="e.g. 60" />
+                <div class="help">
+                  Forces frame rate (<code>-r</code>). Common: <code>24</code>, <code>30</code>, <code>60</code>.
+                </div>
               </div>
               <div>
                 <div class="small">Scale (w:-1)</div>
                 <input id="vscale" type="text" placeholder="e.g. 1280:-1" />
+                <div class="help">
+                  Resize video (<code>-vf scale=...</code>). Use <code>width:-1</code> to preserve aspect ratio.
+                </div>
               </div>
               <div>
                 <div class="small">Codec</div>
@@ -431,10 +349,17 @@
                   <option value="libvpx">VP8</option>
                   <option value="mpeg4">MPEG-4</option>
                 </select>
+                <div class="help">
+                  Selects the video encoder (<code>-c:v</code>). If H.264 fails in this build, try <code>mpeg4</code> or WebM.
+                </div>
               </div>
               <div>
                 <div class="small">CRF</div>
                 <input id="crf" type="number" min="0" max="51" step="1" placeholder="e.g. 23" />
+                <div class="help">
+                  Constant Rate Factor (<code>-crf</code>) controls quality for supported codecs (H.264/VP9).<br/>
+                  Lower = better quality + larger file. Typical H.264: <code>18–28</code>.
+                </div>
               </div>
             </div>
 
@@ -443,16 +368,26 @@
               <div>
                 <div class="small">GIF FPS</div>
                 <input id="gfps" type="number" min="1" step="1" placeholder="e.g. 20" />
+                <div class="help">
+                  GIF frame rate (<code>-r</code>). Lower fps makes much smaller GIFs.
+                </div>
               </div>
               <div>
                 <div class="small">GIF scale (w:-1)</div>
                 <input id="gscale" type="text" placeholder="e.g. 640:-1" />
+                <div class="help">
+                  Resize GIF (<code>-vf scale=...</code>). Try <code>480:-1</code> or <code>640:-1</code> to reduce size.
+                </div>
               </div>
+            </div>
+
+            <div class="note">
+              Leave advanced fields blank to keep defaults. If you switch preset back to Standard/High, advanced values are ignored.
             </div>
           </details>
 
           <div class="section-title">3. Convert</div>
-          <div class="field-row row">
+          <div class="field-row row" style="align-items:center;">
             <button id="convertBtn" disabled>Convert</button>
             <a id="dl" class="small" style="display:none;" href="#">Download result</a>
           </div>
@@ -468,12 +403,12 @@
   </div>
 
   <script type="module">
-    // IMPORTANT: dynamic imports so the module doesn't fail to parse
-    const BUILD = "20260110_xp_cyber_01";
+    const BUILD = "20260115_xp_full_help_01";
 
     const el = (id) => document.getElementById(id);
     const logEl = el("log");
     const statusEl = el("status");
+    const statusBadge = el("statusBadge");
 
     function ts(){ return new Date().toLocaleTimeString(); }
     function log(msg){
@@ -485,8 +420,10 @@
       statusEl.textContent = msg;
       log(`STATUS → ${msg}`);
     }
+    function setBadge(text){
+      statusBadge.textContent = text;
+    }
 
-    // Global error visibility
     window.addEventListener("error", (e) => log(`❌ window.error: ${e.message} @ ${e.filename || ""}:${e.lineno || ""}`));
     window.addEventListener("unhandledrejection", (e) => log(`❌ unhandledrejection: ${e.reason?.message || e.reason}`));
 
@@ -506,7 +443,7 @@
           if (c <= 5){
             let preview;
             try { preview = JSON.stringify(ev.data); } catch { preview = String(ev.data); }
-            log(`🧵 Worker message[${c}] → ${preview.slice(0, 400)}`);
+            log(`🧵 Worker message[${c}] → ${preview.slice(0, 450)}`);
           }
         });
         return w;
@@ -721,8 +658,8 @@
         engineLoaded = false;
 
         status("Importing FFmpeg modules…");
+        setBadge("Engine: loading…");
 
-        // dynamic imports
         const ff = await import("https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
         const util = await import("https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js");
         FFmpegMod = ff;
@@ -753,6 +690,8 @@
 
         engineLoaded = true;
         status("Engine ready.");
+        setBadge("Engine: loaded");
+
         ui.classList.remove("disabled");
         convertBtn.disabled = !currentFile;
 
@@ -763,6 +702,7 @@
       } catch (err) {
         log(`❌ load failed: ${err?.message || String(err)}`);
         status("Load failed (see log).");
+        setBadge("Engine: load failed");
         initBtn.disabled = false;
         alert("Engine failed to load. Check the log for the exact error.");
       }
