@@ -2,115 +2,268 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Media Converter (XP.css)</title>
+  <title>Media Converter (XP.css • Cyberpunk)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Windows XP UI style -->
   <link rel="stylesheet" href="https://unpkg.com/xp.css" />
 
   <style>
-    /* XP pixel font override (same pattern as your reference) */
+    /* === Keep your XP pixel font override === */
     body, .app, .app * {
       font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Arial, sans-serif !important;
       -webkit-font-smoothing: none;
       font-size: 15px;
     }
 
-    body { margin: 16px; }
+    /* === Cyberpunk skin on top of XP.css === */
+    :root{
+      --neo-bg0:#05070f;
+      --neo-bg1:#070a16;
+      --neo-panel: rgba(6, 10, 25, .72);
+      --neo-border: rgba(120, 255, 240, .35);
+      --neo-border2: rgba(255, 90, 240, .30);
+      --neo-cyan:#52fff0;
+      --neo-mag:#ff57f1;
+      --neo-yellow:#ffe56a;
+      --neo-text:#e8f1ff;
+      --neo-dim:#a9b7d6;
+      --neo-danger:#ff4d6d;
+      --neo-ok:#42ff9b;
+      --neo-shadow: 0 14px 40px rgba(0,0,0,.55);
+      --neo-glow: 0 0 12px rgba(82,255,240,.35), 0 0 28px rgba(255,87,241,.18);
+    }
 
-    .app { max-width: 980px; margin: 0 auto; }
+    body{
+      margin: 16px;
+      color: var(--neo-text);
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(82,255,240,.14), transparent 60%),
+        radial-gradient(900px 600px at 90% 20%, rgba(255,87,241,.12), transparent 55%),
+        radial-gradient(700px 520px at 65% 90%, rgba(255,229,106,.08), transparent 55%),
+        linear-gradient(180deg, var(--neo-bg0), var(--neo-bg1));
+      overflow-x: hidden;
+    }
 
-    .section-title {
-      font-size: 0.9rem;
+    /* subtle moving scanlines */
+    body::before{
+      content:"";
+      position: fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.025) 0px,
+          rgba(255,255,255,0.025) 1px,
+          rgba(0,0,0,0) 3px,
+          rgba(0,0,0,0) 6px
+        );
+      mix-blend-mode: overlay;
+      opacity:.35;
+      animation: scan 7s linear infinite;
+    }
+    @keyframes scan{
+      from{ transform: translateY(0); }
+      to{ transform: translateY(24px); }
+    }
+
+    .app{ max-width: 1040px; margin: 0 auto; }
+
+    /* XP window becomes a neon “glass” panel */
+    .window{
+      background: var(--neo-panel);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--neo-shadow);
+      backdrop-filter: blur(8px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* animated border glow */
+    .window::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, rgba(82,255,240,.35), rgba(255,87,241,.35), rgba(255,229,106,.18));
+      filter: blur(10px);
+      opacity: .32;
+      pointer-events:none;
+    }
+    .window::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(900px 200px at 10% 0%, rgba(82,255,240,.12), transparent 60%),
+        radial-gradient(900px 200px at 90% 0%, rgba(255,87,241,.10), transparent 60%);
+      opacity: .8;
+    }
+
+    /* Keep XP title bar, but neon it */
+    .title-bar{
+      background: linear-gradient(90deg, rgba(18, 28, 62, .95), rgba(10, 18, 40, .95));
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 1px 0 rgba(0,0,0,.35) inset;
+      position: relative;
+      z-index: 2;
+    }
+    .title-bar-text{
+      color: var(--neo-text);
+      text-shadow: 0 0 10px rgba(82,255,240,.22);
+      letter-spacing: .02em;
+    }
+
+    /* title bar controls: tiny neon */
+    .title-bar-controls button{
+      filter: saturate(1.2) brightness(1.05);
+      box-shadow: 0 0 10px rgba(82,255,240,.08);
+    }
+
+    .window-body{
+      position: relative;
+      z-index: 2;
+      color: var(--neo-text);
+    }
+
+    .subtitle { margin: 8px 0 12px; font-size: 0.9rem; color: var(--neo-dim); }
+    .hint { font-size: 0.8rem; margin: 4px 0; color: var(--neo-dim); }
+    .small { font-size: 0.8rem; }
+    .muted { opacity: 0.86; color: var(--neo-dim); }
+
+    hr{
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(82,255,240,.25), rgba(255,87,241,.25), transparent);
+      margin: 14px 0;
+    }
+
+    .section-title{
+      font-size: 0.88rem;
       font-weight: 700;
       margin: 12px 0 6px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
+      color: var(--neo-text);
+      text-shadow: 0 0 14px rgba(255,87,241,.12);
+    }
+    .section-title::before{
+      content:"▸";
+      color: var(--neo-cyan);
+      margin-right: 6px;
+      text-shadow: 0 0 14px rgba(82,255,240,.35);
     }
 
-    .subtitle { margin: 6px 0 10px; font-size: 0.9rem; }
-    .hint { font-size: 0.8rem; margin: 4px 0; }
-    .small { font-size: 0.8rem; }
-    .muted { opacity: 0.8; }
-
-    .two-column {
+    .two-column{
       display: grid;
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
       gap: 16px;
     }
-    @media (max-width: 720px) { .two-column { grid-template-columns: 1fr; } }
+    @media (max-width: 720px){ .two-column{ grid-template-columns: 1fr; } }
 
-    .drop-zone {
-      border: 2px dashed #808080;
-      background: #ffffff;
-      padding: 12px;
-      text-align: center;
-      cursor: pointer;
-      font-size: 0.85rem;
-      margin-bottom: 8px;
-      position: relative;
-    }
-    .drop-zone--hover { background: #cce4ff; }
-    .drop-zone input[type="file"] { display:none; }
-
-    .badge {
+    .badge{
       display: inline-block;
       padding: 2px 6px;
-      border: 1px solid #808080;
-      background: #d4d0c8;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-right: 4px;
+      color: var(--neo-text);
+      box-shadow: var(--neo-glow);
     }
 
-    /* Log window styling (XP-ish) */
-    #log {
+    /* Inputs: cyber gloss */
+    input[type="text"], input[type="number"], select{
+      background: rgba(0,0,0,.35) !important;
+      color: var(--neo-text) !important;
+      border: 1px solid rgba(255,255,255,.18) !important;
+      box-shadow: 0 0 0 1px rgba(82,255,240,.10) inset;
+      border-radius: 0 !important; /* keep XP-ish corners */
+      outline: none;
+    }
+    input::placeholder{ color: rgba(233,241,255,.55); }
+
+    /* Buttons: neon press */
+    button{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.10)) !important;
+      color: var(--neo-text) !important;
+      border: 1px solid rgba(255,255,255,.18) !important;
+      box-shadow: 0 0 0 1px rgba(82,255,240,.10) inset, var(--neo-glow);
+    }
+    button:active{
+      transform: translateY(1px);
+      box-shadow: 0 0 0 1px rgba(255,87,241,.18) inset, 0 0 16px rgba(82,255,240,.18);
+    }
+
+    /* Drop zone: neon frame + grid */
+    .drop-zone{
+      border: 2px dashed rgba(82,255,240,.55);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.42)),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 14px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 14px);
+      padding: 12px;
+      text-align:center;
+      cursor:pointer;
+      margin-bottom: 8px;
       position: relative;
-      background: #000;
-      color: #e2e8f0;
-      padding: 8px 10px;
-      border: 1px solid #808080;
-      height: 220px;
+      box-shadow: var(--neo-glow);
+    }
+    .drop-zone--hover{
+      background:
+        linear-gradient(180deg, rgba(82,255,240,.10), rgba(0,0,0,.48)),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0, rgba(255,255,255,.04) 1px, transparent 1px, transparent 14px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0, rgba(255,255,255,.04) 1px, transparent 1px, transparent 14px);
+    }
+
+    /* Log window keeps your feel but more “terminal neon” */
+    #log{
+      background: rgba(0,0,0,.72);
+      color: #a7ffcf;
+      border: 1px solid rgba(82,255,240,.30);
+      height: 240px;
       overflow-y: auto;
       font-family: monospace !important;
       font-size: 0.8rem;
       white-space: pre-wrap;
-      margin-top: 8px;
+      box-shadow: var(--neo-glow);
     }
 
-    /* OPTIONAL: log background image like your reference (uncomment if you want) */
-    /*
-    #log {
-      background: transparent;
-      color: #ff2a2a;
-      font-size: 18px;
+    /* Link download: neon underline */
+    a#dl{
+      color: var(--neo-cyan);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(82,255,240,.55);
+      padding-bottom: 1px;
     }
-    #log::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: url("https://raw.githubusercontent.com/MingjiWang/chilling_lopo_pics/main/79cbc0bca1453cd3c4aab2ac1d220eb7.jpg") center/cover no-repeat;
-      opacity: 0.9;
-      z-index: -1;
-      pointer-events: none;
-      background-position: center top;
-      background-size: 100% auto;
-    }
-    */
-
-    .field-row { margin-bottom: 8px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .row > * { flex: 1 1 auto; }
-
-    input[type="text"], input[type="number"], select {
-      min-width: 220px;
+    a#dl:hover{
+      color: var(--neo-yellow);
+      border-bottom-color: rgba(255,229,106,.65);
+      text-shadow: 0 0 10px rgba(255,229,106,.20);
     }
 
-    .disabled {
+    .field-row{ margin-bottom: 10px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row > *{ flex: 1 1 auto; }
+    input[type="text"], input[type="number"], select{ min-width: 220px; }
+
+    .disabled{
       opacity: 0.55;
       pointer-events: none;
-      filter: grayscale(0.15);
+      filter: grayscale(0.1);
+    }
+
+    /* Status bar: neon separator */
+    .status-bar{
+      background: rgba(0,0,0,.18);
+      border-top: 1px solid rgba(82,255,240,.18);
+      color: var(--neo-dim);
+      position: relative;
+      z-index: 2;
     }
   </style>
 </head>
@@ -119,7 +272,7 @@
   <div class="app">
     <div class="window">
       <div class="title-bar">
-        <div class="title-bar-text">Browser Media Converter (FFmpeg.wasm)</div>
+        <div class="title-bar-text">Browser Media Converter (FFmpeg.wasm • XP Cyber)</div>
         <div class="title-bar-controls">
           <button aria-label="Minimize"></button>
           <button aria-label="Maximize"></button>
@@ -150,15 +303,9 @@
 
           <div>
             <div class="section-title">Info</div>
-            <p class="small">
-              <span class="badge">Runtime</span> FFmpeg.wasm in a Web Worker
-            </p>
-            <p class="small">
-              <span class="badge">Hosting</span> GitHub Pages (Worker must be same-origin)
-            </p>
-            <p class="small">
-              <span class="badge">Debug</span> Worker creation + first messages logged
-            </p>
+            <p class="small"><span class="badge">Runtime</span> FFmpeg.wasm in a Web Worker</p>
+            <p class="small"><span class="badge">Hosting</span> GitHub Pages (Worker must be same-origin)</p>
+            <p class="small"><span class="badge">Debug</span> Worker creation + first messages logged</p>
           </div>
         </div>
 
@@ -322,7 +469,7 @@
 
   <script type="module">
     // IMPORTANT: dynamic imports so the module doesn't fail to parse
-    const BUILD = "20260110_xp_fix_parse_01";
+    const BUILD = "20260110_xp_cyber_01";
 
     const el = (id) => document.getElementById(id);
     const logEl = el("log");
@@ -345,7 +492,7 @@
 
     log(`✅ module started (BUILD=${BUILD})`);
 
-    // Worker debug patch (same spirit as your working version)
+    // Worker debug patch
     (function patchWorker(){
       const NativeWorker = window.Worker;
       if (!NativeWorker || NativeWorker.__ffdbg__) return;
@@ -505,7 +652,6 @@
       if (isAudio){
         args.push("-vn");
 
-        // force sensible defaults for PCM containers
         if (outExt === "wav") addIf(args, true, "-c:a", "pcm_s16le");
         if (outExt === "aiff") addIf(args, true, "-c:a", "pcm_s16be");
 
@@ -545,7 +691,7 @@
       return args;
     }
 
-    // Drop-zone behavior (like your reference)
+    // Drop-zone behavior
     dropZone.addEventListener("click", () => fileInput.click());
     dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drop-zone--hover"); });
     dropZone.addEventListener("dragleave", (e) => { e.preventDefault(); dropZone.classList.remove("drop-zone--hover"); });
@@ -576,7 +722,7 @@
 
         status("Importing FFmpeg modules…");
 
-        // ✅ dynamic imports (this is the key fix)
+        // dynamic imports
         const ff = await import("https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
         const util = await import("https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js");
         FFmpegMod = ff;
@@ -588,17 +734,14 @@
         ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
         ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
 
-        // Core/WASM from CDN (esm)
         const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
         const coreURL = `${base}/ffmpeg-core.js`;
         const wasmURL = `${base}/ffmpeg-core.wasm`;
 
-        // Worker must be same-origin + its imports must exist locally
         const classWorkerURL = new URL(`./worker.js?v=${BUILD}`, import.meta.url).toString();
         const constURL = new URL(`./const.js?v=${BUILD}`, import.meta.url).toString();
         const errorsURL = new URL(`./errors.js?v=${BUILD}`, import.meta.url).toString();
 
-        // preflight
         await assertFetchable(classWorkerURL, "worker.js (local)", 1000);
         await assertFetchable(constURL, "const.js (local)", 200);
         await assertFetchable(errorsURL, "errors.js (local)", 200);
