@@ -9,15 +9,43 @@
   <link rel="stylesheet" href="https://unpkg.com/xp.css" />
 
   <style>
-    /* XP pixel font override (same pattern as your reference) */
+    /* XP pixel font override */
     body, .app, .app * {
       font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Arial, sans-serif !important;
       -webkit-font-smoothing: none;
       font-size: 15px;
     }
 
-    body { margin: 16px; background: #d4d0c8; }
+    /* === BACKGROUND IMAGE (from your repo) + dark overlay for readability ===
+       IMPORTANT: use the RAW url, not the github "blob" url
+    */
+    :root{
+      --bg-url: url("https://raw.githubusercontent.com/MingjiWang/browser-media-converter/main/1%20(68).png");
+      --bg-overlay: rgba(0,0,0,.58); /* tune 0.45–0.70 */
+    }
+
+    body {
+      margin: 16px;
+      background-color: #0b0f14;
+      background-image:
+        linear-gradient(var(--bg-overlay), var(--bg-overlay)),
+        var(--bg-url);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
     .app { max-width: 980px; margin: 0 auto; }
+
+    /* Make the XP window stand out from the busy background */
+    .window{
+      box-shadow: 0 14px 46px rgba(0,0,0,.55);
+    }
+
+    /* xp.css already styles .window-body, but we reinforce the classic readable XP look */
+    .window-body{
+      background: #ECE9D8; /* classic XP-ish beige */
+    }
 
     .section-title {
       font-size: 0.9rem;
@@ -25,11 +53,13 @@
       margin: 12px 0 6px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
+      color: #000;
+      text-shadow: 0 1px 0 rgba(255,255,255,.6);
     }
 
-    .subtitle { margin: 6px 0 10px; font-size: 0.9rem; }
-    .hint { font-size: 0.8rem; margin: 4px 0; }
-    .small { font-size: 0.8rem; }
+    .subtitle { margin: 6px 0 10px; font-size: 0.9rem; color:#111; }
+    .hint { font-size: 0.8rem; margin: 4px 0; color:#111; }
+    .small { font-size: 0.8rem; color:#111; }
     .muted { opacity: 0.85; }
 
     .two-column {
@@ -41,7 +71,7 @@
 
     .drop-zone {
       border: 2px dashed #808080;
-      background: #ffffff;
+      background: rgba(255,255,255,.92); /* readable over bg image */
       padding: 12px;
       text-align: center;
       cursor: pointer;
@@ -61,16 +91,17 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-right: 4px;
+      color:#000;
     }
 
-    /* Log window styling (XP-ish) */
+    /* Log window (keep XP vibe, high contrast) */
     #log {
       position: relative;
-      background: #000;
+      background: rgba(0,0,0,.88);
       color: #e2e8f0;
       padding: 8px 10px;
       border: 1px solid #808080;
-      height: 240px;
+      height: 220px;
       overflow-y: auto;
       font-family: monospace !important;
       font-size: 0.8rem;
@@ -78,8 +109,8 @@
       margin-top: 8px;
     }
 
-    .field-row { margin-bottom: 10px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+    .field-row { margin-bottom: 8px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .row > * { flex: 1 1 auto; }
 
     input[type="text"], input[type="number"], select {
@@ -92,45 +123,16 @@
       filter: grayscale(0.15);
     }
 
-    /* Help blocks */
-    .help {
-      margin-top: 6px;
-      font-size: 0.8rem;
-      color: #222;
-      background: #fff;
-      border: 1px solid #808080;
-      padding: 6px 8px;
-      line-height: 1.35;
-    }
-    .help code { font-size: 0.8rem; }
-
-    details summary { cursor: pointer; }
-    details summary:hover { text-decoration: underline; }
-
-    .help-list { margin: 6px 0 0; padding-left: 18px; }
-    .help-list li { margin: 4px 0; }
-    .help kbd {
-      border: 1px solid #808080;
-      background: #d4d0c8;
-      padding: 0 4px;
-      font-size: 0.75rem;
-    }
-
-    .status-inline {
-      display: inline-block;
-      margin-left: 10px;
-      padding: 1px 6px;
-      border: 1px solid #808080;
-      background: #fff;
-      font-size: 0.8rem;
-    }
-
-    /* Small note under advanced sections */
-    .note {
+    /* Small help text blocks inside advanced settings */
+    .help{
+      font-size: 0.78rem;
+      color:#111;
+      line-height: 1.25;
       margin-top: 4px;
-      font-size: 0.8rem;
-      color: #333;
-      opacity: 0.9;
+    }
+    .help code{
+      font-family: monospace !important;
+      font-size: 0.78rem;
     }
   </style>
 </head>
@@ -157,8 +159,8 @@
             <div class="section-title">How to use</div>
             <ol class="small">
               <li>Click <b>Load Engine</b> (first load may take time).</li>
-              <li>Drop a file (audio or video) or click the drop area.</li>
-              <li>Choose output format + preset (or advanced settings).</li>
+              <li>Drop a file (audio or video).</li>
+              <li>Choose output format + quality controls.</li>
               <li>Click <b>Convert</b> and download the result.</li>
             </ol>
 
@@ -180,15 +182,10 @@
 
         <div class="section-title">0. Engine</div>
         <div class="field-row">
-          <div class="row" style="align-items:center;">
+          <div class="row">
             <button id="initBtn">Load Engine</button>
             <button id="clearBtn">Clear Log</button>
             <span class="small muted" id="status">Idle.</span>
-            <span class="status-inline" id="statusBadge">Engine: not loaded</span>
-          </div>
-          <div class="help">
-            <b>Tip:</b> First load downloads + compiles the FFmpeg WASM core. After caching, reloads are faster.
-            If it “hangs”, check the <b>Log</b> — Worker import/URL issues show up there.
           </div>
         </div>
 
@@ -204,9 +201,6 @@
             or click to choose a file.
             <div class="small muted" id="fileLabel" style="margin-top:6px;"></div>
             <input type="file" id="fileInput" />
-          </div>
-          <div class="help">
-            Works best for small-to-medium files. Very large files can hit browser memory limits.
           </div>
 
           <div class="section-title">2. Output</div>
@@ -239,10 +233,6 @@
               </optgroup>
             </select>
             <div class="small muted" id="formatNote" style="margin-top:6px;"></div>
-            <div class="help">
-              <b>Container</b> (MP4/MOV/WEBM) ≠ <b>codec</b> (H.264/VP9/etc). If an output fails,
-              try MP4 + H.264 or WebM + VP8/VP9 (see Advanced → Codec).
-            </div>
           </div>
 
           <div class="field-row">
@@ -255,61 +245,36 @@
               <input id="customName" type="text" placeholder="custom base name (no extension)" disabled />
             </div>
             <div class="help">
-              <b>Auto</b> uses <code>originalName_to_EXT.ext</code> (safe characters only).<br/>
-              <b>Custom</b> uses your base name and the tool adds the extension.
+              <b>Auto</b> = <code>originalName_to_EXT.ext</code>. <b>Custom</b> uses your base name.
             </div>
           </div>
 
           <div class="field-row">
             <label class="small"><b>Quality preset</b></label><br/>
             <select id="preset">
-              <option value="standard">Standard (safe)</option>
-              <option value="high">High (bigger file)</option>
+              <option value="standard">Standard</option>
+              <option value="high">High</option>
               <option value="custom">Custom (advanced)</option>
             </select>
             <div class="help">
-              <b>Standard</b>: minimal options; safest across formats.<br/>
-              <b>High</b>: sets stronger defaults (e.g. 320k audio bitrate / 48kHz; 60fps video).<br/>
-              <b>Custom</b>: unlocks the Advanced section. Leave fields blank to keep input defaults.
+              <b>High</b> uses sane defaults (audio ~320k/48kHz; video ~60fps). Use <b>Custom</b> to override.
             </div>
           </div>
 
           <details id="advanced" class="field-row">
-            <summary class="small"><b>Advanced settings (what each does)</b></summary>
-
-            <div class="help">
-              These map to FFmpeg flags. You can copy the “Exec:” line from the Log and run it on desktop FFmpeg too.
-              <ul class="help-list">
-                <li><b>Audio bitrate</b> (<code>-b:a</code>): for lossy audio. Higher → larger file.</li>
-                <li><b>Sample rate</b> (<code>-ar</code>): resample audio. Common: <code>44100</code>, <code>48000</code>.</li>
-                <li><b>Channels</b> (<code>-ac</code>): force mono/stereo. Mono reduces size.</li>
-                <li><b>FPS</b> (<code>-r</code>): force frame rate. Higher fps increases work/size.</li>
-                <li><b>Scale</b> (<code>-vf scale=W:H</code>): resize video/GIF. Use <code>1280:-1</code> to keep aspect ratio.</li>
-                <li><b>Codec</b> (<code>-c:v</code>): encoder choice. If output fails, try <code>mpeg4</code>.</li>
-                <li><b>CRF</b> (<code>-crf</code>): quality knob (lower=better) for codecs that support it (esp. H.264/VP9).</li>
-              </ul>
-              <b>Quick recipes:</b><br/>
-              • Smaller MP4: <code>scale=1280:-1</code>, <code>crf=26</code>, <code>fps=30</code><br/>
-              • Good audio: <code>mp3 320k</code> or <code>aac 256k</code>, <code>48kHz</code><br/>
-              • If encode fails: switch video codec to <code>mpeg4</code> or output to WebM.
-            </div>
+            <summary class="small"><b>Advanced controls</b></summary>
 
             <div class="section-title">Audio</div>
             <div class="row">
               <div>
                 <div class="small">Bitrate (kbps)</div>
                 <input id="ab" type="number" min="8" step="1" placeholder="e.g. 320" />
-                <div class="help">
-                  Sets audio bitrate (<code>-b:a</code>). Only matters for lossy formats (MP3/AAC/OGG/Opus).<br/>
-                  Examples: <code>128</code> (small), <code>192</code> (balanced), <code>320</code> (high).
-                </div>
+                <div class="help">Sets <code>-b:a</code>. Higher = bigger file, usually better quality (for lossy formats).</div>
               </div>
               <div>
                 <div class="small">Sample rate (Hz)</div>
                 <input id="ar" type="number" min="8000" step="100" placeholder="e.g. 48000" />
-                <div class="help">
-                  Resamples audio (<code>-ar</code>). Common: <code>44100</code> for music, <code>48000</code> for video.
-                </div>
+                <div class="help">Sets <code>-ar</code>. Common: 44100, 48000. Resampling costs time.</div>
               </div>
               <div>
                 <div class="small">Channels</div>
@@ -318,9 +283,7 @@
                   <option value="1">Mono</option>
                   <option value="2">Stereo</option>
                 </select>
-                <div class="help">
-                  Forces channel count (<code>-ac</code>). Mono is good for speech/podcasts.
-                </div>
+                <div class="help">Sets <code>-ac</code>. Mono is smaller; Stereo preserves width.</div>
               </div>
             </div>
 
@@ -329,16 +292,12 @@
               <div>
                 <div class="small">FPS</div>
                 <input id="vfps" type="number" min="1" step="1" placeholder="e.g. 60" />
-                <div class="help">
-                  Forces frame rate (<code>-r</code>). Common: <code>24</code>, <code>30</code>, <code>60</code>.
-                </div>
+                <div class="help">Sets <code>-r</code>. Higher = smoother, larger, slower encode.</div>
               </div>
               <div>
                 <div class="small">Scale (w:-1)</div>
                 <input id="vscale" type="text" placeholder="e.g. 1280:-1" />
-                <div class="help">
-                  Resize video (<code>-vf scale=...</code>). Use <code>width:-1</code> to preserve aspect ratio.
-                </div>
+                <div class="help">Adds <code>-vf scale=...</code>. Use <code>-1</code> to keep aspect ratio.</div>
               </div>
               <div>
                 <div class="small">Codec</div>
@@ -349,17 +308,12 @@
                   <option value="libvpx">VP8</option>
                   <option value="mpeg4">MPEG-4</option>
                 </select>
-                <div class="help">
-                  Selects the video encoder (<code>-c:v</code>). If H.264 fails in this build, try <code>mpeg4</code> or WebM.
-                </div>
+                <div class="help">Sets <code>-c:v</code>. Not all encoders exist in every wasm build.</div>
               </div>
               <div>
                 <div class="small">CRF</div>
                 <input id="crf" type="number" min="0" max="51" step="1" placeholder="e.g. 23" />
-                <div class="help">
-                  Constant Rate Factor (<code>-crf</code>) controls quality for supported codecs (H.264/VP9).<br/>
-                  Lower = better quality + larger file. Typical H.264: <code>18–28</code>.
-                </div>
+                <div class="help">Quality target for many codecs. Lower = better quality, bigger files.</div>
               </div>
             </div>
 
@@ -368,26 +322,18 @@
               <div>
                 <div class="small">GIF FPS</div>
                 <input id="gfps" type="number" min="1" step="1" placeholder="e.g. 20" />
-                <div class="help">
-                  GIF frame rate (<code>-r</code>). Lower fps makes much smaller GIFs.
-                </div>
+                <div class="help">Sets <code>-r</code> for GIF. Too high makes huge GIFs.</div>
               </div>
               <div>
                 <div class="small">GIF scale (w:-1)</div>
                 <input id="gscale" type="text" placeholder="e.g. 640:-1" />
-                <div class="help">
-                  Resize GIF (<code>-vf scale=...</code>). Try <code>480:-1</code> or <code>640:-1</code> to reduce size.
-                </div>
+                <div class="help">Adds <code>-vf scale=...</code>. Smaller GIF = much smaller file.</div>
               </div>
-            </div>
-
-            <div class="note">
-              Leave advanced fields blank to keep defaults. If you switch preset back to Standard/High, advanced values are ignored.
             </div>
           </details>
 
           <div class="section-title">3. Convert</div>
-          <div class="field-row row" style="align-items:center;">
+          <div class="field-row row">
             <button id="convertBtn" disabled>Convert</button>
             <a id="dl" class="small" style="display:none;" href="#">Download result</a>
           </div>
@@ -403,12 +349,11 @@
   </div>
 
   <script type="module">
-    const BUILD = "20260115_xp_full_help_01";
+    const BUILD = "20260110_xp_bg_01";
 
     const el = (id) => document.getElementById(id);
     const logEl = el("log");
     const statusEl = el("status");
-    const statusBadge = el("statusBadge");
 
     function ts(){ return new Date().toLocaleTimeString(); }
     function log(msg){
@@ -419,9 +364,6 @@
     function status(msg){
       statusEl.textContent = msg;
       log(`STATUS → ${msg}`);
-    }
-    function setBadge(text){
-      statusBadge.textContent = text;
     }
 
     window.addEventListener("error", (e) => log(`❌ window.error: ${e.message} @ ${e.filename || ""}:${e.lineno || ""}`));
@@ -443,7 +385,7 @@
           if (c <= 5){
             let preview;
             try { preview = JSON.stringify(ev.data); } catch { preview = String(ev.data); }
-            log(`🧵 Worker message[${c}] → ${preview.slice(0, 450)}`);
+            log(`🧵 Worker message[${c}] → ${preview.slice(0, 400)}`);
           }
         });
         return w;
@@ -591,7 +533,6 @@
 
         if (outExt === "wav") addIf(args, true, "-c:a", "pcm_s16le");
         if (outExt === "aiff") addIf(args, true, "-c:a", "pcm_s16be");
-
         if (outExt === "mp3") addIf(args, true, "-c:a", "libmp3lame");
         if (outExt === "ogg") addIf(args, true, "-c:a", "libvorbis");
         if (outExt === "opus") addIf(args, true, "-c:a", "libopus");
@@ -647,7 +588,7 @@
       convertBtn.disabled = !(engineLoaded && currentFile);
     });
 
-    // === ENGINE LOAD ===
+    // ENGINE LOAD
     initBtn.addEventListener("click", async () => {
       log("▶ Load Engine clicked");
 
@@ -658,7 +599,6 @@
         engineLoaded = false;
 
         status("Importing FFmpeg modules…");
-        setBadge("Engine: loading…");
 
         const ff = await import("https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
         const util = await import("https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js");
@@ -690,8 +630,6 @@
 
         engineLoaded = true;
         status("Engine ready.");
-        setBadge("Engine: loaded");
-
         ui.classList.remove("disabled");
         convertBtn.disabled = !currentFile;
 
@@ -702,13 +640,12 @@
       } catch (err) {
         log(`❌ load failed: ${err?.message || String(err)}`);
         status("Load failed (see log).");
-        setBadge("Engine: load failed");
         initBtn.disabled = false;
         alert("Engine failed to load. Check the log for the exact error.");
       }
     });
 
-    // === CONVERT ===
+    // CONVERT
     convertBtn.addEventListener("click", async () => {
       if (!engineLoaded || !currentFile) return;
 
