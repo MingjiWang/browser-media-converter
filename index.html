@@ -16,61 +16,9 @@
       font-size: 15px;
     }
 
-    /* Keep the real webpage background classic XP */
-    body {
-      margin: 16px;
-      background: #3a6ea5; /* XP-ish desktop blue */
-    }
+    body { margin: 16px; }
 
-    /* === "Mock XP page background" stage ===
-       This is where your image lives (NOT on body).
-       Use RAW url, not github blob.
-    */
-    :root{
-      --stage-img: url("https://raw.githubusercontent.com/MingjiWang/browser-media-converter/main/1%20(68).png");
-      --overlay: rgba(0,0,0,.55);   /* 0.45–0.70 */
-      --overlay2: rgba(0,0,0,.25);  /* subtle second layer */
-    }
-
-    .xp-stage{
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 18px;
-      border: 1px solid rgba(255,255,255,.35);
-      box-shadow: 0 18px 55px rgba(0,0,0,.45);
-      position: relative;
-
-      /* image background behind the XP window */
-      background-image:
-        linear-gradient(var(--overlay), var(--overlay)),
-        radial-gradient(circle at 20% 10%, rgba(255,255,255,.08), transparent 45%),
-        var(--stage-img);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      border-radius: 6px;
-    }
-
-    /* Optional: add a tiny “glass” sheen */
-    .xp-stage::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      border-radius: 6px;
-      background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 35%);
-      pointer-events:none;
-    }
-
-    .app { position: relative; z-index: 1; }
-
-    /* Make the XP window pop from the busy image */
-    .window{
-      box-shadow: 0 14px 46px rgba(0,0,0,.60);
-    }
-
-    .window-body{
-      background: #ECE9D8; /* classic XP beige */
-    }
+    .app { max-width: 980px; margin: 0 auto; }
 
     .section-title {
       font-size: 0.9rem;
@@ -78,13 +26,11 @@
       margin: 12px 0 6px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #000;
-      text-shadow: 0 1px 0 rgba(255,255,255,.6);
     }
 
-    .subtitle { margin: 6px 0 10px; font-size: 0.9rem; color:#111; }
-    .hint { font-size: 0.8rem; margin: 4px 0; color:#111; }
-    .small { font-size: 0.8rem; color:#111; }
+    .subtitle { margin: 6px 0 10px; font-size: 0.9rem; }
+    .hint { font-size: 0.8rem; margin: 4px 0; }
+    .small { font-size: 0.8rem; }
     .muted { opacity: 0.85; }
 
     .two-column {
@@ -96,7 +42,7 @@
 
     .drop-zone {
       border: 2px dashed #808080;
-      background: rgba(255,255,255,.92);
+      background: #ffffff;
       padding: 12px;
       text-align: center;
       cursor: pointer;
@@ -116,12 +62,11 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-right: 4px;
-      color:#000;
     }
 
-    /* Log window (high contrast) */
+    /* Log window styling (XP-ish) */
     #log {
-      background: rgba(0,0,0,.88);
+      background: #000;
       color: #e2e8f0;
       padding: 8px 10px;
       border: 1px solid #808080;
@@ -136,7 +81,10 @@
     .field-row { margin-bottom: 8px; }
     .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .row > * { flex: 1 1 auto; }
-    input[type="text"], input[type="number"], select { min-width: 220px; }
+
+    input[type="text"], input[type="number"], select {
+      min-width: 220px;
+    }
 
     .disabled {
       opacity: 0.55;
@@ -144,235 +92,290 @@
       filter: grayscale(0.15);
     }
 
-    .help{
-      font-size: 0.78rem;
-      color:#111;
-      line-height: 1.25;
-      margin-top: 4px;
+    /* ================================
+       ✅ KEY FIX: background INSIDE the XP window
+       Put the image on .window-body (the pseudo page),
+       not on <body>.
+       ================================ */
+
+    :root{
+      /* Use RAW github URL (not /blob/) */
+      --xp-bg-img: url("https://raw.githubusercontent.com/MingjiWang/browser-media-converter/main/1%20(68).png");
     }
-    .help code{
-      font-family: monospace !important;
+
+    .window-body{
+      position: relative;
+      /* image lives INSIDE the window */
+      background: var(--xp-bg-img) center top / cover no-repeat;
+      /* keep XP-ish spacing */
+      padding: 12px;
+    }
+
+    /* Readability layer: a light “sheet” over the image, inside the window */
+    .window-body::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: rgba(255,255,255,0.82); /* raise/lower for readability */
+      /* subtle XP-ish dithery feel */
+      backdrop-filter: blur(1px);
+      z-index:0;
+      pointer-events:none;
+    }
+
+    /* Put all window content above overlay */
+    .window-body > *{
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Optional: make separators more visible on image */
+    hr{
+      border: 0;
+      border-top: 1px solid rgba(128,128,128,0.9);
+      margin: 12px 0;
+    }
+
+    /* Optional: slightly stronger badges/boxes over busy image */
+    .drop-zone, #log{
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;
+    }
+
+    /* Advanced descriptions styling */
+    .desc{
       font-size: 0.78rem;
+      opacity: 0.9;
+      margin-top: 4px;
+      line-height: 1.25;
+    }
+    .helpbox{
+      border: 1px solid #808080;
+      background: #fff;
+      padding: 8px 10px;
+      margin-top: 8px;
+      font-size: 0.8rem;
     }
   </style>
 </head>
 
 <body>
-  <!-- Image background lives here (mock XP page background) -->
-  <div class="xp-stage">
-    <div class="app">
-      <div class="window">
-        <div class="title-bar">
-          <div class="title-bar-text">Browser Media Converter (FFmpeg.wasm)</div>
-          <div class="title-bar-controls">
-            <button aria-label="Minimize"></button>
-            <button aria-label="Maximize"></button>
-            <button aria-label="Close"></button>
+  <div class="app">
+    <div class="window">
+      <div class="title-bar">
+        <div class="title-bar-text">Browser Media Converter (FFmpeg.wasm)</div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize"></button>
+          <button aria-label="Maximize"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+
+      <div class="window-body">
+        <p class="subtitle">
+          Convert audio/video locally in your browser (no backend). If something fails, the Worker logs will show why.
+        </p>
+
+        <div class="two-column">
+          <div>
+            <div class="section-title">How to use</div>
+            <ol class="small">
+              <li>Click <b>Load Engine</b> (first load may take time).</li>
+              <li>Drop a file (audio or video).</li>
+              <li>Choose output format + quality controls.</li>
+              <li>Click <b>Convert</b> and download the result.</li>
+            </ol>
+
+            <p class="hint">
+              Some formats/codecs are <span class="badge">experimental</span> in FFmpeg.wasm builds.
+              If one fails, try MP4/WebM for video, WAV/MP3/AAC/FLAC for audio.
+            </p>
+          </div>
+
+          <div>
+            <div class="section-title">Info</div>
+            <p class="small"><span class="badge">Runtime</span> FFmpeg.wasm in a Web Worker</p>
+            <p class="small"><span class="badge">Hosting</span> GitHub Pages (Worker must be same-origin)</p>
+            <p class="small"><span class="badge">Debug</span> Worker creation + first messages logged</p>
           </div>
         </div>
 
-        <div class="window-body">
-          <p class="subtitle">
-            Convert audio/video locally in your browser (no backend). If something fails, the Worker logs will show why.
-          </p>
+        <hr />
 
-          <div class="two-column">
-            <div>
-              <div class="section-title">How to use</div>
-              <ol class="small">
-                <li>Click <b>Load Engine</b> (first load may take time).</li>
-                <li>Drop a file (audio or video).</li>
-                <li>Choose output format + quality controls.</li>
-                <li>Click <b>Convert</b> and download the result.</li>
-              </ol>
+        <div class="section-title">0. Engine</div>
+        <div class="field-row">
+          <div class="row">
+            <button id="initBtn">Load Engine</button>
+            <button id="clearBtn">Clear Log</button>
+            <span class="small muted" id="status">Idle.</span>
+          </div>
+        </div>
 
-              <p class="hint">
-                Some formats/codecs are <span class="badge">experimental</span> in FFmpeg.wasm builds.
-                If one fails, try MP4/WebM for video, WAV/MP3/AAC/FLAC for audio.
-              </p>
-            </div>
+        <div class="section-title">Log</div>
+        <pre id="log"></pre>
 
-            <div>
-              <div class="section-title">Info</div>
-              <p class="small"><span class="badge">Runtime</span> FFmpeg.wasm in a Web Worker</p>
-              <p class="small"><span class="badge">Hosting</span> GitHub Pages (Worker must be same-origin)</p>
-              <p class="small"><span class="badge">Debug</span> Worker creation + first messages logged</p>
-            </div>
+        <hr />
+
+        <div id="ui" class="disabled">
+          <div class="section-title">1. Load File</div>
+          <div class="drop-zone" id="dropZone">
+            <strong>Drop file here</strong><br />
+            or click to choose a file.
+            <div class="small muted" id="fileLabel" style="margin-top:6px;"></div>
+            <input type="file" id="fileInput" />
           </div>
 
-          <hr />
+          <div class="section-title">2. Output</div>
 
-          <div class="section-title">0. Engine</div>
           <div class="field-row">
+            <label class="small"><b>Format</b></label><br/>
+            <select id="format">
+              <optgroup label="Audio (recommended)">
+                <option value="mp3">MP3</option>
+                <option value="m4a">M4A (AAC)</option>
+                <option value="aac">AAC</option>
+                <option value="wav">WAV (PCM)</option>
+                <option value="flac">FLAC</option>
+                <option value="aiff">AIFF (PCM)</option>
+                <option value="ogg">Ogg Vorbis (if available)</option>
+                <option value="opus">Opus (if available)</option>
+              </optgroup>
+              <optgroup label="Video (recommended)">
+                <option value="mp4">MP4</option>
+                <option value="mov">MOV</option>
+                <option value="webm">WebM</option>
+                <option value="gif">GIF</option>
+              </optgroup>
+              <optgroup label="Experimental (may fail)">
+                <option value="avi">AVI</option>
+                <option value="mkv">MKV</option>
+                <option value="flv">FLV</option>
+                <option value="wmv">WMV</option>
+                <option value="m2ts">AVCHD/M2TS</option>
+              </optgroup>
+            </select>
+            <div class="small muted" id="formatNote" style="margin-top:6px;"></div>
+          </div>
+
+          <div class="field-row">
+            <label class="small"><b>Output naming</b></label>
             <div class="row">
-              <button id="initBtn">Load Engine</button>
-              <button id="clearBtn">Clear Log</button>
-              <span class="small muted" id="status">Idle.</span>
+              <select id="nameMode" style="min-width:160px;">
+                <option value="auto" selected>Auto</option>
+                <option value="custom">Custom</option>
+              </select>
+              <input id="customName" type="text" placeholder="custom base name (no extension)" disabled />
+            </div>
+            <div class="desc">
+              <b>Auto</b>: <code>originalName_to_ext.ext</code> • <b>Custom</b>: you enter a base name (extension is added automatically).
             </div>
           </div>
 
-          <div class="section-title">Log</div>
-          <pre id="log"></pre>
+          <div class="field-row">
+            <label class="small"><b>Quality preset</b></label><br/>
+            <select id="preset">
+              <option value="standard">Standard</option>
+              <option value="high">High</option>
+              <option value="custom">Custom (advanced)</option>
+            </select>
+            <div class="desc">
+              <b>High</b> uses sensible defaults (e.g. 320k + 48kHz for audio, ~60fps for video). Use <b>Custom</b> to override.
+            </div>
+          </div>
 
-          <hr />
+          <details id="advanced" class="field-row">
+            <summary class="small"><b>Advanced controls (what they do)</b></summary>
 
-          <div id="ui" class="disabled">
-            <div class="section-title">1. Load File</div>
-            <div class="drop-zone" id="dropZone">
-              <strong>Drop file here</strong><br />
-              or click to choose a file.
-              <div class="small muted" id="fileLabel" style="margin-top:6px;"></div>
-              <input type="file" id="fileInput" />
+            <div class="helpbox">
+              Leave a field blank to <b>keep source / default</b>. Some encoders might not exist in wasm builds (then ffmpeg will error in the log).
             </div>
 
-            <div class="section-title">2. Output</div>
-
-            <div class="field-row">
-              <label class="small"><b>Format</b></label><br/>
-              <select id="format">
-                <optgroup label="Audio (recommended)">
-                  <option value="mp3">MP3</option>
-                  <option value="m4a">M4A (AAC)</option>
-                  <option value="aac">AAC</option>
-                  <option value="wav">WAV (PCM)</option>
-                  <option value="flac">FLAC</option>
-                  <option value="aiff">AIFF (PCM)</option>
-                  <option value="ogg">Ogg Vorbis (if available)</option>
-                  <option value="opus">Opus (if available)</option>
-                </optgroup>
-                <optgroup label="Video (recommended)">
-                  <option value="mp4">MP4</option>
-                  <option value="mov">MOV</option>
-                  <option value="webm">WebM</option>
-                  <option value="gif">GIF</option>
-                </optgroup>
-                <optgroup label="Experimental (may fail)">
-                  <option value="avi">AVI</option>
-                  <option value="mkv">MKV</option>
-                  <option value="flv">FLV</option>
-                  <option value="wmv">WMV</option>
-                  <option value="m2ts">AVCHD/M2TS</option>
-                </optgroup>
-              </select>
-              <div class="small muted" id="formatNote" style="margin-top:6px;"></div>
-            </div>
-
-            <div class="field-row">
-              <label class="small"><b>Output naming</b></label>
-              <div class="row">
-                <select id="nameMode" style="min-width:160px;">
-                  <option value="auto" selected>Auto</option>
-                  <option value="custom">Custom</option>
+            <div class="section-title">Audio</div>
+            <div class="row">
+              <div>
+                <div class="small">Bitrate (kbps)</div>
+                <input id="ab" type="number" min="8" step="1" placeholder="e.g. 320" />
+                <div class="desc">Controls compression quality for MP3/AAC/Opus/Vorbis. Higher = bigger file.</div>
+              </div>
+              <div>
+                <div class="small">Sample rate (Hz)</div>
+                <input id="ar" type="number" min="8000" step="100" placeholder="e.g. 48000" />
+                <div class="desc">Resamples audio. Common: 44100 (music), 48000 (video).</div>
+              </div>
+              <div>
+                <div class="small">Channels</div>
+                <select id="ac">
+                  <option value="">(keep)</option>
+                  <option value="1">Mono</option>
+                  <option value="2">Stereo</option>
                 </select>
-                <input id="customName" type="text" placeholder="custom base name (no extension)" disabled />
-              </div>
-              <div class="help">
-                <b>Auto</b> = <code>originalName_to_EXT.ext</code>. <b>Custom</b> uses your base name.
+                <div class="desc">Downmix or force stereo. Mono reduces size.</div>
               </div>
             </div>
 
-            <div class="field-row">
-              <label class="small"><b>Quality preset</b></label><br/>
-              <select id="preset">
-                <option value="standard">Standard</option>
-                <option value="high">High</option>
-                <option value="custom">Custom (advanced)</option>
-              </select>
-              <div class="help">
-                <b>High</b> uses sane defaults (audio ~320k/48kHz; video ~60fps). Use <b>Custom</b> to override.
+            <div class="section-title">Video</div>
+            <div class="row">
+              <div>
+                <div class="small">FPS</div>
+                <input id="vfps" type="number" min="1" step="1" placeholder="e.g. 60" />
+                <div class="desc">Frame rate. Higher = smoother but heavier.</div>
+              </div>
+              <div>
+                <div class="small">Scale (w:-1)</div>
+                <input id="vscale" type="text" placeholder="e.g. 1280:-1" />
+                <div class="desc">Resize video. Use <code>-1</code> to keep aspect ratio.</div>
+              </div>
+              <div>
+                <div class="small">Codec</div>
+                <select id="vcodec">
+                  <option value="">(auto)</option>
+                  <option value="libx264">H.264 (libx264)</option>
+                  <option value="libvpx-vp9">VP9</option>
+                  <option value="libvpx">VP8</option>
+                  <option value="mpeg4">MPEG-4</option>
+                </select>
+                <div class="desc">Chooses video encoder. Availability depends on the wasm build.</div>
+              </div>
+              <div>
+                <div class="small">CRF</div>
+                <input id="crf" type="number" min="0" max="51" step="1" placeholder="e.g. 23" />
+                <div class="desc">Quality knob (mainly H.264/VP9). Lower = better quality, bigger file. Typical: 18–28.</div>
               </div>
             </div>
 
-            <details id="advanced" class="field-row">
-              <summary class="small"><b>Advanced controls</b></summary>
-
-              <div class="section-title">Audio</div>
-              <div class="row">
-                <div>
-                  <div class="small">Bitrate (kbps)</div>
-                  <input id="ab" type="number" min="8" step="1" placeholder="e.g. 320" />
-                  <div class="help">Sets <code>-b:a</code>. Higher = bigger file, usually better quality (lossy).</div>
-                </div>
-                <div>
-                  <div class="small">Sample rate (Hz)</div>
-                  <input id="ar" type="number" min="8000" step="100" placeholder="e.g. 48000" />
-                  <div class="help">Sets <code>-ar</code>. Common: 44100 / 48000.</div>
-                </div>
-                <div>
-                  <div class="small">Channels</div>
-                  <select id="ac">
-                    <option value="">(keep)</option>
-                    <option value="1">Mono</option>
-                    <option value="2">Stereo</option>
-                  </select>
-                  <div class="help">Sets <code>-ac</code>. Mono is smaller; Stereo preserves width.</div>
-                </div>
+            <div class="section-title">GIF</div>
+            <div class="row">
+              <div>
+                <div class="small">GIF FPS</div>
+                <input id="gfps" type="number" min="1" step="1" placeholder="e.g. 20" />
+                <div class="desc">Controls animation smoothness vs file size.</div>
               </div>
-
-              <div class="section-title">Video</div>
-              <div class="row">
-                <div>
-                  <div class="small">FPS</div>
-                  <input id="vfps" type="number" min="1" step="1" placeholder="e.g. 60" />
-                  <div class="help">Sets <code>-r</code>. Higher = smoother, larger, slower encode.</div>
-                </div>
-                <div>
-                  <div class="small">Scale (w:-1)</div>
-                  <input id="vscale" type="text" placeholder="e.g. 1280:-1" />
-                  <div class="help">Adds <code>-vf scale=...</code>. Use <code>-1</code> to keep aspect.</div>
-                </div>
-                <div>
-                  <div class="small">Codec</div>
-                  <select id="vcodec">
-                    <option value="">(auto)</option>
-                    <option value="libx264">H.264 (libx264)</option>
-                    <option value="libvpx-vp9">VP9</option>
-                    <option value="libvpx">VP8</option>
-                    <option value="mpeg4">MPEG-4</option>
-                  </select>
-                  <div class="help">Sets <code>-c:v</code>. Some encoders may be missing in wasm builds.</div>
-                </div>
-                <div>
-                  <div class="small">CRF</div>
-                  <input id="crf" type="number" min="0" max="51" step="1" placeholder="e.g. 23" />
-                  <div class="help">Quality target. Lower = better quality, bigger file. Typical 18–28.</div>
-                </div>
+              <div>
+                <div class="small">GIF scale (w:-1)</div>
+                <input id="gscale" type="text" placeholder="e.g. 640:-1" />
+                <div class="desc">Downscale GIFs to avoid huge outputs.</div>
               </div>
-
-              <div class="section-title">GIF</div>
-              <div class="row">
-                <div>
-                  <div class="small">GIF FPS</div>
-                  <input id="gfps" type="number" min="1" step="1" placeholder="e.g. 20" />
-                  <div class="help">GIF frame rate. Too high can make huge GIFs.</div>
-                </div>
-                <div>
-                  <div class="small">GIF scale (w:-1)</div>
-                  <input id="gscale" type="text" placeholder="e.g. 640:-1" />
-                  <div class="help">Scale GIF for file size. <code>-1</code> preserves aspect ratio.</div>
-                </div>
-              </div>
-            </details>
-
-            <div class="section-title">3. Convert</div>
-            <div class="field-row row">
-              <button id="convertBtn" disabled>Convert</button>
-              <a id="dl" class="small" style="display:none;" href="#">Download result</a>
             </div>
+          </details>
+
+          <div class="section-title">3. Convert</div>
+          <div class="field-row row">
+            <button id="convertBtn" disabled>Convert</button>
+            <a id="dl" class="small" style="display:none;" href="#">Download result</a>
           </div>
+        </div>
 
-          <div class="status-bar">
-            <p class="status-bar-field" id="sb1">Engine: not loaded</p>
-            <p class="status-bar-field" id="sb2">Worker: same-origin required</p>
-            <p class="status-bar-field" id="sb3">Mode: browser-only</p>
-          </div>
+        <div class="status-bar">
+          <p class="status-bar-field" id="sb1">Engine: not loaded</p>
+          <p class="status-bar-field" id="sb2">Worker: same-origin required</p>
+          <p class="status-bar-field" id="sb3">Mode: browser-only</p>
         </div>
       </div>
     </div>
   </div>
 
   <script type="module">
-    const BUILD = "20260110_xp_stage_bg_01";
+    // IMPORTANT: dynamic imports so the module doesn't fail to parse
+    const BUILD = "20260110_xp_bg_windowbody_01";
 
     const el = (id) => document.getElementById(id);
     const logEl = el("log");
@@ -555,6 +558,7 @@
 
         if (outExt === "wav") addIf(args, true, "-c:a", "pcm_s16le");
         if (outExt === "aiff") addIf(args, true, "-c:a", "pcm_s16be");
+
         if (outExt === "mp3") addIf(args, true, "-c:a", "libmp3lame");
         if (outExt === "ogg") addIf(args, true, "-c:a", "libvorbis");
         if (outExt === "opus") addIf(args, true, "-c:a", "libopus");
@@ -611,6 +615,7 @@
 
     initBtn.addEventListener("click", async () => {
       log("▶ Load Engine clicked");
+
       try {
         initBtn.disabled = true;
         convertBtn.disabled = true;
@@ -618,6 +623,7 @@
         engineLoaded = false;
 
         status("Importing FFmpeg modules…");
+
         const ff = await import("https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
         const util = await import("https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js");
         FFmpegMod = ff;
@@ -625,6 +631,7 @@
 
         status("Creating FFmpeg instance…");
         ffmpeg = new FFmpegMod.FFmpeg();
+
         ffmpeg.on("log", ({ message }) => log(`ffmpeg> ${message}`));
         ffmpeg.on("progress", ({ progress }) => status(`Processing: ${Math.round(progress * 100)}%`));
 
