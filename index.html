@@ -18,6 +18,16 @@
 
     body { margin: 16px; }
 
+    :root{
+  --c-title: #dffcff;      /* title bar text (bright) */
+  --c-heading: #a8fff6;    /* section titles */
+  --c-body: #071016;       /* normal readable body text */
+  --c-muted: rgba(7,16,22,.75);
+  --c-status: #00f5e1;     /* status line accent */
+  --c-log: #b9fff7;        /* log text */
+  --c-log-dim: rgba(185,255,247,.75);
+}
+
     .app { max-width: 980px; margin: 0 auto; }
 
     .section-title {
@@ -72,7 +82,7 @@
       border: 1px solid #808080;
       height: 220px;
       overflow-y: auto;
-      font-family: monospace !important;
+      font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Arial, sans-serif !important;
       font-size: 0.8rem;
       white-space: pre-wrap;
       margin-top: 8px;
@@ -161,6 +171,34 @@
       margin-top: 8px;
       font-size: 0.8rem;
     }
+
+    /* Title bar text color */
+.title-bar-text{
+  color: var(--c-title) !important;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.35);
+}
+
+/* Section headers */
+.section-title{
+  color: var(--c-heading) !important;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+}
+
+/* Default text inside the XP window */
+.window-body{
+  color: var(--c-body);
+}
+
+/* Muted helpers / hints */
+.muted, .hint, .small{
+  color: var(--c-muted);
+}
+
+/* Status line */
+#status{
+  color: var(--c-status) !important;
+  font-weight: 700;
+}
   </style>
 </head>
 
