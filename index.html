@@ -103,20 +103,26 @@
       --xp-bg-img: url("https://raw.githubusercontent.com/MingjiWang/browser-media-converter/main/1%20(68).png");
     }
 
-    .window-body{
-      position: relative;
-      /* image lives INSIDE the window */
-      background: var(--xp-bg-img) center top / cover no-repeat;
-      /* keep XP-ish spacing */
-      padding: 12px;
-    }
+    /* 1) Put the image on the whole window (fills to the frame) */
+.window{
+  position: relative;
+  background: var(--xp-bg-img) center top / cover no-repeat;
+}
+
+    /* 2) Remove the default body inset look that causes the gap */
+.window-body{
+  background: transparent !important;
+  margin: 0 !important;
+  border: 0 !important;
+  padding: 12px; /* keep your spacing */
+}
 
     /* Readability layer: a light “sheet” over the image, inside the window */
     .window-body::before{
       content:"";
       position:absolute;
       inset:0;
-      background: rgba(255,255,255,0.82); /* raise/lower for readability */
+      background: rgba(255,255,255,0.92); /* raise/lower for readability */
       /* subtle XP-ish dithery feel */
       backdrop-filter: blur(1px);
       z-index:0;
