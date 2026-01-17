@@ -1,0 +1,259 @@
+@import "tailwindcss";
+
+/* Configure dark mode to use the .dark class instead of system preference */
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --glass-rgb: #FFFFFF;
+  --glass-bg-alpha: 60%;
+  --bg1: #f8fafc;
+  --bg2: #e7eeef;
+}
+
+.dark {
+  --glass-rgb: #000000;
+  --bg1: #1b1b22;
+  --bg2: #0f0f14;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom utility classes for mask gradients */
+.mask-b-from-70\% {
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+}
+
+.mask-b-to-100\% {
+  /* Combined with above */
+}
+
+.mask-b-from-50\% {
+  mask-image: linear-gradient(to bottom, black 50%, transparent 75%);
+}
+
+.mask-b-to-75\% {
+  /* Combined with above */
+}
+
+.mask-b-from-20\% {
+  mask-image: linear-gradient(to bottom, black 20%, transparent 55%);
+}
+
+.mask-b-to-55\% {
+  /* Combined with above */
+}
+
+.mask-t-from-0\% {
+  mask-image: linear-gradient(to top, black 0%, transparent 100%);
+}
+
+.mask-t-to-100\% {
+  /* Combined with above */
+}
+
+/* Text shadow utilities */
+.text-shadow-xs {
+  text-shadow: 0 1px 2px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
+}
+
+/* Animated background keyframes - smooth pan in all directions */
+@keyframes bg-pan {
+  0% {
+    background-position: center center;
+  }
+
+  12.5% {
+    background-position: center top;
+  }
+
+  25% {
+    background-position: right top;
+  }
+
+  37.5% {
+    background-position: right center;
+  }
+
+  50% {
+    background-position: right bottom;
+  }
+
+  62.5% {
+    background-position: center bottom;
+  }
+
+  75% {
+    background-position: left bottom;
+  }
+
+  87.5% {
+    background-position: left center;
+  }
+
+  100% {
+    background-position: center center;
+  }
+}
+
+.animate-bg-pan {
+  animation: bg-pan 30s ease-in-out infinite;
+  background-size: 120% 120% !important;
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Line clamp */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Transition utilities */
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-150 {
+  transition-duration: 150ms;
+}
+
+.duration-200 {
+  transition-duration: 200ms;
+}
+
+.ease-out {
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Range input slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Track styling - WebKit (Chrome, Safari, Edge) */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 1px;
+}
+
+.dark input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Track styling - Firefox */
+input[type="range"]::-moz-range-track {
+  height: 2px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 1px;
+  border: none;
+}
+
+.dark input[type="range"]::-moz-range-track {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Thumb styling - WebKit */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #333;
+  cursor: pointer;
+  border: none;
+  /* Center the thumb on the track: (trackHeight - thumbHeight) / 2 */
+  margin-top: calc((2px - 12px) / 2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease-out;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+/* Thumb styling - Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #333;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease-out;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Dark mode thumb styling */
+.dark input[type="range"]::-webkit-slider-thumb {
+  background: #e5e5e5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.dark input[type="range"]::-moz-range-thumb {
+  background: #e5e5e5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Remove focus outline */
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
